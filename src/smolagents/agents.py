@@ -36,6 +36,7 @@ from rich.panel import Panel
 from rich.rule import Rule
 from rich.text import Text
 
+from src.smolagents import MessageRole, ChatMessage
 from .agent_types import AgentAudio, AgentImage, AgentType, handle_agent_output_types
 from .default_tools import TOOL_MAPPING, FinalAnswerTool
 from .local_python_executor import BASE_BUILTIN_MODULES, LocalPythonExecutor, PythonExecutor, fix_final_answer_code
@@ -160,6 +161,7 @@ EMPTY_PROMPT_TEMPLATES = PromptTemplates(
 )
 
 
+
 class MultiStepAgent:
     """
     Agent class that solves the given task step by step, using the ReAct framework:
@@ -217,7 +219,7 @@ class MultiStepAgent:
         self._setup_tools(tools, add_base_tools)
         self._validate_tools_and_managed_agents(tools, managed_agents)
 
-        self.system_prompt = self.initialize_system_prompt()
+        self.system_prompt: str = self.initialize_system_prompt()
         self.input_messages = None
         self.task = None
         self.memory = AgentMemory(self.system_prompt)
@@ -236,7 +238,7 @@ class MultiStepAgent:
 
     def _setup_tools(self, tools, add_base_tools):
         assert all(isinstance(tool, Tool) for tool in tools), "All elements must be instance of Tool (or a subclass)"
-        self.tools = {tool.name: tool for tool in tools}
+        self.tools: Dict[str, Tool] = {tool.name: tool for tool in tools}
         if add_base_tools:
             self.tools.update(
                 {
@@ -323,6 +325,8 @@ You have been provided with these additional arguments, that you can access usin
     ) -> Generator[ActionStep | AgentType, None, None]:
         final_answer = None
         self.step_number = 1
+        step_start_time = time.time()
+        memory_step = None
         while final_answer is None and self.step_number <= max_steps:
             step_start_time = time.time()
             memory_step = self._create_memory_step(step_start_time, images)
@@ -389,12 +393,17 @@ You have been provided with these additional arguments, that you can access usin
         return final_answer
 
     def planning_step(self, task, is_first_step: bool, step: int) -> None:
-        input_messages, facts_message, plan_message = (
-            self._generate_initial_plan(task) if is_first_step else self._generate_updated_plan(task, step)
-        )
+        if is_first_step:
+            input_messages, facts_message, plan_message = self._generate_initial_plan(task)
+        else:
+            input_messages, facts_message, plan_message = self._generate_updated_plan(task, step)
+
         self._record_planning_step(input_messages, facts_message, plan_message, is_first_step)
 
-    def _generate_initial_plan(self, task: str) -> Tuple[ChatMessage, ChatMessage]:
+    def _generate_initial_plan(
+            self,
+            task: str
+    ) -> tuple[list[dict[str, list[dict[str, str]] | MessageRole]], ChatMessage, ChatMessage]:
         input_messages = [
             {
                 "role": MessageRole.USER,
@@ -430,7 +439,11 @@ You have been provided with these additional arguments, that you can access usin
         plan_message = self.model([message_prompt_plan], stop_sequences=["<end_plan>"])
         return input_messages, facts_message, plan_message
 
-    def _generate_updated_plan(self, task: str, step: int) -> Tuple[ChatMessage, ChatMessage]:
+    def _generate_updated_plan(
+            self,
+            task: str,
+            step: int
+    ) -> tuple[list[dict[str, str] | dict[str, list[dict[str, str]] | MessageRole]], ChatMessage, ChatMessage]:
         # Do not take the system prompt message from the memory
         # summary_mode=False: Do not take previous plan steps to avoid influencing the new plan
         memory_messages = self.write_memory_to_messages()[1:]
@@ -514,7 +527,7 @@ You have been provided with these additional arguments, that you can access usin
         )
         return [self.memory.system_prompt] + self.memory.steps
 
-    def initialize_system_prompt(self):
+    def initialize_system_prompt(self) -> str:
         """To be implemented in child classes"""
         pass
 
@@ -996,6 +1009,7 @@ You have been provided with these additional arguments, that you can access usin
                 create_pr=create_pr,
                 repo_type="space",
             )
+
 
 
 class ToolCallingAgent(MultiStepAgent):
