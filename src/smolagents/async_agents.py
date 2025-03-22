@@ -20,12 +20,12 @@ from .remote_executors import DockerExecutor, E2BExecutor
 from .local_python_executor import LocalPythonExecutor, PythonExecutor, BASE_BUILTIN_MODULES, fix_final_answer_code
 from .agents import MultiStepAgent, PromptTemplates, EMPTY_PROMPT_TEMPLATES, populate_template, truncate_content
 from .default_tools import FinalAnswerTool, TOOL_MAPPING
+from .tools import Tool
 from .async_monitoring import (
     LogLevel,
     AsyncMonitor,
     AsyncAgentLogger
 )
-from .async_tools import AsyncTool
 from .memory import ActionStep, SystemPromptStep, TaskStep, PlanningStep, AgentMemory, ToolCall
 from .models import (
     ChatMessage,
@@ -49,7 +49,7 @@ R = TypeVar("R")
 class AsyncMultiStepAgentBase:
     def __init__(
             self,
-            tools: List[AsyncTool],
+            tools: List[Tool],
             model: Callable[[List[Dict[str, str]]], Awaitable[ChatMessage]],
             prompt_templates: Optional[PromptTemplates] = None,
             max_steps: int = 20,
@@ -140,7 +140,7 @@ class AsyncMultiStepAgentBase:
 class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
     def __init__(
             self,
-            tools: List[AsyncTool],
+            tools: List[Tool],
             model: Callable[[List[Dict[str, str]]], Awaitable[ChatMessage]],
             prompt_templates: Optional[PromptTemplates] = None,
             max_steps: int = 20,
@@ -182,8 +182,8 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
         self.step_callbacks.append(self.monitor.update_metrics)
 
     def _setup_tools(self, tools, add_base_tools):
-        assert all(isinstance(tool, AsyncTool) for tool in tools), "All elements must be instance of AsyncTool (or a subclass)"
-        self.tools: Dict[str, AsyncTool] = {tool.name: tool for tool in tools}
+        assert all(isinstance(tool, Tool) for tool in tools), "All elements must be instance of Tool (or a subclass)"
+        self.tools: Dict[str, Tool] = {tool.name: tool for tool in tools}
         if add_base_tools:
             self.tools.update(
                 {
@@ -233,10 +233,9 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
         if stream:
             return await self._run(task=self.task, max_steps=max_steps, images=images)
 
-        results = await asyncio.gather(
-            *[step async for step in self._run(task=self.task, max_steps=max_steps, images=images)],
-            return_exceptions=True
-        )
+        results = []
+        async for step in self._run(task=self.task, max_steps=max_steps, images=images):
+            results.append(step)
 
         return results[-1] if results else None
 
@@ -291,7 +290,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
                 )
 
     async def _handle_max_steps_reached(self, task: str, images: List[str], step_start_time: float) -> Any:
-        final_answer = self.provide_final_answer(task, images)
+        final_answer = await self.provide_final_answer(task, images)
         final_memory_step = ActionStep(
             step_number=self.step_number, error=AsyncAgentMaxStepsError("Reached max steps.", self.logger)
         )
@@ -713,7 +712,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
         for tool_name in agent_dict.get("tools", []):
             tool_path = folder / "tools" / f"{tool_name}.py"
             tool_code = await asyncio.to_thread(tool_path.read_text)
-            tools.append(AsyncTool.from_code(tool_code))
+            tools.append(Tool.from_code(tool_code))
 
         model_module = importlib.import_module("smolagents.async_models")
         model_class = getattr(model_module, agent_dict["model"]["class"])
@@ -744,7 +743,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
 class ToolCallingAgent(AsyncMultiStepAgent):
     def __init__(
             self,
-            tools: List[AsyncTool],
+            tools: List[Tool],
             model: Callable[[List[Dict[str, str]]], Awaitable[ChatMessage]],
             prompt_templates: Optional[PromptTemplates] = None,
             max_steps: int = 20,
@@ -885,7 +884,7 @@ class ToolCallingAgent(AsyncMultiStepAgent):
 class AsyncCodeAgent(AsyncMultiStepAgent):
     def __init__(
         self,
-        tools: List[AsyncTool],
+        tools: List[Tool],
         model: Callable[[List[Dict[str, str]]], ChatMessage],
         prompt_templates: Optional[PromptTemplates] = None,
         grammar: Optional[Dict[str, str]] = None,
