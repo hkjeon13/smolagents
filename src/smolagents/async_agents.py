@@ -32,13 +32,13 @@ from .models import (
     ChatMessage,
     MessageRole,
 )
-from .utils import (
-    AgentError,
-    AgentParsingError,
-    AgentGenerationError,
-    AgentMaxStepsError,
-    AgentExecutionError,
-    make_init_file_async,
+from .async_utils import (
+    AsyncAgentError,
+    AsyncAgentParsingError,
+    AsyncAgentGenerationError,
+    AsyncAgentMaxStepsError,
+    AsyncAgentExecutionError,
+    async_make_init_file,
     async_write_file,
 )
 from .async_monitoring import YELLOW_HEX
@@ -253,10 +253,10 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
             memory_step = self._create_memory_step(step_start_time, images)
             try:
                 final_answer = await self._execute_step(task, memory_step)
-            except AgentGenerationError as e:
+            except AsyncAgentGenerationError as e:
                 # Agent generation errors are not caused by a Model error but an implementation error: so we should raise them and exit.
                 raise e
-            except AgentError as e:
+            except AsyncAgentError as e:
                 # Other AgentError types are caused by the Model, so we should log them and iterate.
                 memory_step.error = e
             finally:
@@ -294,7 +294,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
     async def _handle_max_steps_reached(self, task: str, images: List[str], step_start_time: float) -> Any:
         final_answer = self.provide_final_answer(task, images)
         final_memory_step = ActionStep(
-            step_number=self.step_number, error=AgentMaxStepsError("Reached max steps.", self.logger)
+            step_number=self.step_number, error=AsyncAgentMaxStepsError("Reached max steps.", self.logger)
         )
         final_memory_step.action_output = final_answer
         final_memory_step.end_time = time.time()
@@ -404,7 +404,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
         available_tools = {**self.tools, **self.managed_agents}
         if tool_name not in available_tools:
             error_msg = f"Unknown tool {tool_name}, should be instead one of {list(available_tools.keys())}."
-            raise AgentExecutionError(error_msg, self.logger)
+            raise AsyncAgentExecutionError(error_msg, self.logger)
 
         try:
             if isinstance(arguments, str):
@@ -423,7 +423,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
                     observation = await available_tools[tool_name].__call__(**arguments, sanitize_inputs_outputs=True)
             else:
                 error_msg = f"Arguments passed to tool should be a dict or string: got a {type(arguments)}."
-                raise AgentExecutionError(error_msg, self.logger)
+                raise AsyncAgentExecutionError(error_msg, self.logger)
             return observation
 
         except Exception as e:
@@ -433,13 +433,13 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
                     f"Error when executing tool {tool_name} with arguments {arguments}: {type(e).__name__}: {e}\nYou should only use this tool with a correct input.\n"
                     f"As a reminder, this tool's description is the following: '{tool.description}'.\nIt takes inputs: {tool.inputs} and returns output type {tool.output_type}"
                 )
-                raise AgentExecutionError(error_msg, self.logger)
+                raise AsyncAgentExecutionError(error_msg, self.logger)
             elif tool_name in self.managed_agents:
                 error_msg = (
                     f"Error in calling team member: {e}\nYou should only ask this team member with a correct request.\n"
                     f"As a reminder, this team member's description is the following:\n{available_tools[tool_name]}"
                 )
-                raise AgentExecutionError(error_msg, self.logger)
+                raise AsyncAgentExecutionError(error_msg, self.logger)
 
     async def _generate_initial_plan(
             self,
@@ -544,12 +544,12 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
         - app.py: Space에서 UI를 제공하는 Gradio 앱 코드
         """
         # output_dir에 __init__.py 생성
-        await make_init_file_async(output_dir)
+        await async_make_init_file(output_dir)
 
         # 관리하는 에이전트가 있다면 재귀적으로 저장 (각각 비동기로 저장)
         if self.managed_agents:
             managed_agents_dir = os.path.join(output_dir, "managed_agents")
-            await make_init_file_async(managed_agents_dir)
+            await async_make_init_file(managed_agents_dir)
             for agent_name, agent in self.managed_agents.items():
                 agent_suffix = f"managed_agents.{agent_name}"
                 if relative_path:
@@ -561,7 +561,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
 
         # tools 폴더에 각 도구들을 저장 (각 도구의 save 메서드가 비동기로 구현되어 있다고 가정)
         tools_dir = os.path.join(output_dir, "tools")
-        await make_init_file_async(tools_dir)
+        await async_make_init_file(tools_dir)
         for tool in self.tools.values():
             await tool.save(tools_dir, tool_file_name=tool.name, make_gradio_app=False)
 
@@ -808,7 +808,7 @@ class ToolCallingAgent(AsyncMultiStepAgent):
             )
             memory_step.model_output_message = model_message
         except Exception as e:
-            raise AgentGenerationError(f"Error in generating tool call with model:\n{e}", self.logger) from e
+            raise AsyncAgentGenerationError(f"Error in generating tool call with model:\n{e}", self.logger) from e
 
         await self.logger.log_markdown(
             content=model_message.content if model_message.content else str(model_message.raw),
@@ -817,7 +817,7 @@ class ToolCallingAgent(AsyncMultiStepAgent):
         )
 
         if model_message.tool_calls is None or len(model_message.tool_calls) == 0:
-            raise AgentParsingError(
+            raise AsyncAgentParsingError(
                 "Model did not call any tools. Call `final_answer` tool to return a final answer.", self.logger
             )
 
@@ -974,7 +974,7 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
             model_output = chat_message.content
             memory_step.model_output = model_output
         except Exception as e:
-            raise AgentGenerationError(f"Error in generating model output:\n{e}", self.logger) from e
+            raise AsyncAgentGenerationError(f"Error in generating model output:\n{e}", self.logger) from e
 
         await self.logger.log_markdown(
             content=model_output,
@@ -987,7 +987,7 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
             code_action = fix_final_answer_code(parse_code_blobs(model_output))
         except Exception as e:
             error_msg = f"Error in code parsing:\n{e}\nMake sure to provide correct code blobs."
-            raise AgentParsingError(error_msg, self.logger)
+            raise AsyncAgentParsingError(error_msg, self.logger)
 
         memory_step.tool_calls = [
             ToolCall(
@@ -1025,7 +1025,7 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
                     "[bold red]Warning to user: Code execution failed due to an unauthorized import - Consider passing said import under `additional_authorized_imports` when initializing your CodeAgent.",
                     level=LogLevel.INFO,
                 )
-            raise AgentExecutionError(error_msg, self.logger)
+            raise AsyncAgentExecutionError(error_msg, self.logger)
 
         truncated_output = truncate_content(str(output))
         observation += "Last output from code snippet:\n" + truncated_output
