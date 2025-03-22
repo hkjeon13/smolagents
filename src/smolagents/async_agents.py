@@ -20,6 +20,7 @@ from .remote_executors import DockerExecutor, E2BExecutor
 from .local_python_executor import BASE_BUILTIN_MODULES, PythonExecutor, fix_final_answer_code
 from .async_local_python_executor import AsyncLocalPythonExecutor
 from .agents import MultiStepAgent, PromptTemplates, EMPTY_PROMPT_TEMPLATES, populate_template, truncate_content
+from .async_default_tools import AsyncFinalAnswerTool, ASYNC_TOOL_MAPPING
 from .async_monitoring import (
     LogLevel,
     AsyncMonitor,
@@ -134,6 +135,8 @@ class AsyncMultiStepAgentBase:
     async def __call__(task: str, **kwargs):
         raise NotImplementedError
 
+    async def _setup_tools(self):
+        raise NotImplementedError
 
 class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
     def __init__(
@@ -178,6 +181,20 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
         self.monitor = AsyncMonitor(self.model, self.logger)
         self.step_callbacks = step_callbacks if step_callbacks is not None else []
         self.step_callbacks.append(self.monitor.update_metrics)
+
+    def _setup_tools(self, tools, add_base_tools):
+        assert all(isinstance(tool, AsyncTool) for tool in tools), "All elements must be instance of AsyncTool (or a subclass)"
+        self.tools: Dict[str, AsyncTool] = {tool.name: tool for tool in tools}
+        if add_base_tools:
+            self.tools.update(
+                {
+                    name: cls()
+                    for name, cls in ASYNC_TOOL_MAPPING.items()
+                    if name != "python_interpreter" or self.__class__.__name__ == "AsyncToolCallingAgent"
+                }
+            )
+
+        self.tools.setdefault("final_answer", AsyncFinalAnswerTool())
 
     async def run(
             self,
