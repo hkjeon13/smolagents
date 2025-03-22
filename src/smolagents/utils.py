@@ -27,7 +27,7 @@ from functools import lru_cache
 from io import BytesIO
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Dict, Tuple
-
+import asyncio
 
 if TYPE_CHECKING:
     from smolagents.memory import AgentLogger
@@ -439,3 +439,19 @@ def make_init_file(folder: str):
     # Create __init__
     with open(os.path.join(folder, "__init__.py"), "w"):
         pass
+
+
+def make_init_file(folder: str):
+    os.makedirs(folder, exist_ok=True)
+    # __init__.py 파일 생성
+    with open(os.path.join(folder, "__init__.py"), "w"):
+        pass
+
+async def async_write_file(path: str, content: str) -> None:
+    def write():
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(content)
+    await asyncio.to_thread(write)
+
+async def make_init_file_async(folder: str):
+    await asyncio.to_thread(make_init_file, folder)
