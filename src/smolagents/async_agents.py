@@ -531,6 +531,51 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
         )
         return input_messages, facts_message, plan_message
 
+    async def to_dict(self) -> Dict[str, Any]:
+        """Converts agent into a dictionary."""
+        # TODO: handle serializing step_callbacks and final_answer_checks
+        for attr in ["final_answer_checks", "step_callbacks"]:
+            if getattr(self, attr, None):
+                await self.logger.log(f"This agent has {attr}: they will be ignored by this method.", LogLevel.INFO)
+
+        tool_dicts = [tool.to_dict() for tool in self.tools.values()]
+        tool_requirements = {req for tool in self.tools.values() for req in tool.to_dict()["requirements"]}
+        managed_agents_requirements = {
+            req for managed_agent in self.managed_agents.values() for req in managed_agent.to_dict()["requirements"]
+        }
+        requirements = tool_requirements | managed_agents_requirements
+        if hasattr(self, "authorized_imports"):
+            requirements.update(
+                {package.split(".")[0] for package in self.authorized_imports if package not in BASE_BUILTIN_MODULES}
+            )
+
+        agent_dict = {
+            "tools": tool_dicts,
+            "model": {
+                "class": self.model.__class__.__name__,
+                "data": self.model.to_dict(),
+            },
+            "managed_agents": {
+                managed_agent.name: managed_agent.__class__.__name__ for managed_agent in self.managed_agents.values()
+            },
+            "prompt_templates": self.prompt_templates,
+            "max_steps": self.max_steps,
+            "verbosity_level": int(self.logger.level),
+            "grammar": self.grammar,
+            "planning_interval": self.planning_interval,
+            "name": self.name,
+            "description": self.description,
+            "requirements": list(requirements),
+        }
+        if hasattr(self, "authorized_imports"):
+            agent_dict["authorized_imports"] = self.authorized_imports
+        if hasattr(self, "executor_type"):
+            agent_dict["executor_type"] = self.executor_type
+            agent_dict["executor_kwargs"] = self.executor_kwargs
+        if hasattr(self, "max_print_outputs_length"):
+            agent_dict["max_print_outputs_length"] = self.max_print_outputs_length
+        return agent_dict
+
     async def save(self, output_dir: str, relative_path: Optional[str] = None):
         """
         에이전트의 관련 코드 파일들을 저장합니다.
@@ -561,7 +606,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
         tools_dir = os.path.join(output_dir, "tools")
         await async_make_init_file(tools_dir)
         for tool in self.tools.values():
-            await tool.save(tools_dir, tool_file_name=tool.name, make_gradio_app=False)
+            tool.save(tools_dir, tool_file_name=tool.name, make_gradio_app=False)
 
         # 프롬프트 템플릿을 YAML 형식으로 저장
         yaml_prompts = yaml.safe_dump(
@@ -577,7 +622,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
         await async_write_file(prompts_path, yaml_prompts)
 
         # 에이전트 정보를 담은 JSON 파일 저장
-        agent_dict = self.to_dict()
+        agent_dict = await self.to_dict()
         agent_dict["tools"] = [tool.name for tool in self.tools.values()]
         agent_json = json.dumps(agent_dict, indent=4)
         agent_json_path = os.path.join(output_dir, "agent.json")
@@ -596,7 +641,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
             import os
             from smolagents import GradioUI, {{ class_name }}, {{ agent_dict['model']['class'] }}
 
-            # 현재 디렉토리 경로
+            # Current directory
             CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
             {% for tool in tools.values() -%}
@@ -999,7 +1044,7 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
         await self.logger.log_code(title="Executing parsed code:", content=code_action, level=LogLevel.INFO)
         is_final_answer = False
         try:
-            output, execution_logs, is_final_answer = await self.python_executor(code_action)
+            output, execution_logs, is_final_answer = self.python_executor(code_action)
             execution_outputs_console = []
             if len(execution_logs) > 0:
                 execution_outputs_console += [
