@@ -24,7 +24,7 @@ async def main(args: argparse.Namespace):
     )
 
     question = "트럼프가 말하는 상호관세가 뭐야?"
-    output = await agent.run(question,stream=False, reset=False)
+    output = await agent.run(question)
     print(output)
 
 

@@ -17,10 +17,9 @@ from rich.text import Text
 import asyncio
 from .agent_types import AgentType, handle_agent_output_types, AgentImage, AgentAudio
 from .remote_executors import DockerExecutor, E2BExecutor
-from .local_python_executor import BASE_BUILTIN_MODULES, PythonExecutor, fix_final_answer_code
-from .async_local_python_executor import AsyncLocalPythonExecutor
+from .local_python_executor import LocalPythonExecutor, PythonExecutor, BASE_BUILTIN_MODULES, fix_final_answer_code
 from .agents import MultiStepAgent, PromptTemplates, EMPTY_PROMPT_TEMPLATES, populate_template, truncate_content
-from .async_default_tools import AsyncFinalAnswerTool, ASYNC_TOOL_MAPPING
+from .default_tools import FinalAnswerTool, TOOL_MAPPING
 from .async_monitoring import (
     LogLevel,
     AsyncMonitor,
@@ -189,12 +188,12 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
             self.tools.update(
                 {
                     name: cls()
-                    for name, cls in ASYNC_TOOL_MAPPING.items()
+                    for name, cls in TOOL_MAPPING.items()
                     if name != "python_interpreter" or self.__class__.__name__ == "AsyncToolCallingAgent"
                 }
             )
 
-        self.tools.setdefault("final_answer", AsyncFinalAnswerTool())
+        self.tools.setdefault("final_answer", FinalAnswerTool())
 
     async def run(
             self,
@@ -411,7 +410,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
                 if tool_name in self.managed_agents:
                     observation = await available_tools[tool_name].__call__(arguments)
                 else:
-                    observation = await available_tools[tool_name].__call__(arguments, sanitize_inputs_outputs=True)
+                    observation = available_tools[tool_name].__call__(arguments, sanitize_inputs_outputs=True)
 
             elif isinstance(arguments, dict):
                 for key, value in arguments.items():
@@ -420,7 +419,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
                 if tool_name in self.managed_agents:
                     observation = await available_tools[tool_name].__call__(**arguments)
                 else:
-                    observation = await available_tools[tool_name].__call__(**arguments, sanitize_inputs_outputs=True)
+                    observation = available_tools[tool_name].__call__(**arguments, sanitize_inputs_outputs=True)
             else:
                 error_msg = f"Arguments passed to tool should be a dict or string: got a {type(arguments)}."
                 raise AsyncAgentExecutionError(error_msg, self.logger)
@@ -930,7 +929,7 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
                 else:
                     return DockerExecutor(self.additional_authorized_imports, self.logger, **self.executor_kwargs)
             case "local":
-                return AsyncLocalPythonExecutor(
+                return LocalPythonExecutor(
                     self.additional_authorized_imports,
                     max_print_outputs_length=self.max_print_outputs_length,
                 )
