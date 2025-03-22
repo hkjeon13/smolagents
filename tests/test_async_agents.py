@@ -2,8 +2,8 @@ import argparse
 import asyncio
 import os
 import sys
-from smolagents.models import AsyncAzureOpenAIServerModel
-from smolagents import AsyncCodeAgent
+from smolagents.async_models import AsyncAzureOpenAIServerModel
+from smolagents.async_agents import AsyncCodeAgent
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../.."))
 
@@ -19,7 +19,6 @@ async def main(args: argparse.Namespace):
     agent = AsyncCodeAgent(
         model=model,
         add_base_tools=True,
-        step_callbacks=[],
         max_steps=10
     )
 
@@ -30,10 +29,6 @@ async def main(args: argparse.Namespace):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run the agent")
-    parser.add_argument("--session_id", type=str, default="test")
-    parser.add_argument("--user_id", type=str, default="test")
-    parser.add_argument("--group_id", type=str, default="test")
-    parser.add_argument("--sub_group_id", type=str, default="test")
     parser.add_argument("--backend_name", type=str, default="azure-openai", help="The backend name.")
     parser.add_argument("--model_id", type=str, default="gpt4o", help="The model name.")
     parser.add_argument("--api_key", type=str, default="", help="The api key.")
