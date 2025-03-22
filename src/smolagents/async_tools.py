@@ -187,7 +187,7 @@ class AsyncTool:
                 from smolagents import Tool
                 from typing import Any, Optional
 
-                class {class_name}(Tool):
+                class {class_name}(AsyncTool):
                     name = "{self.name}"
                     description = {json.dumps(textwrap.dedent(self.description).strip())}
                     inputs = {json.dumps(self.inputs, separators=(",", ":"))}
@@ -219,7 +219,7 @@ class AsyncTool:
                     "Cannot save objects created with from_space, from_langchain or from_gradio, as this would create errors."
                 )
             validate_tool_attributes(self.__class__)
-            tool_code = "from typing import Any, Optional\n" + instance_to_source(self, base_cls=Tool)
+            tool_code = "from typing import Any, Optional\n" + instance_to_source(self, base_cls=AsyncTool)
         requirements = {el for el in get_imports(tool_code) if el not in sys.stdlib_module_names} | {"smolagents"}
         return {"name": self.name, "code": tool_code, "requirements": requirements}
 
@@ -308,7 +308,7 @@ class AsyncTool:
             (
                 obj
                 for _, obj in inspect.getmembers(module, inspect.isclass)
-                if issubclass(obj, Tool) and obj is not Tool
+                if issubclass(obj, AsyncTool) and obj is not AsyncTool
             ),
             None,
         )
@@ -322,7 +322,7 @@ class AsyncTool:
     def from_space(space_id: str, name: str, description: str, api_name: Optional[str] = None, token: Optional[str] = None):
         from gradio_client import Client, handle_file
 
-        class SpaceToolWrapper(Tool):
+        class SpaceToolWrapper(AsyncTool):
             skip_forward_signature_validation = True
 
             def __init__(self, space_id: str, name: str, description: str, api_name: Optional[str] = None, token: Optional[str] = None):
@@ -388,7 +388,7 @@ class AsyncTool:
     def from_gradio(gradio_tool):
         import inspect
 
-        class GradioToolWrapper(Tool):
+        class GradioToolWrapper(AsyncTool):
             def __init__(self, _gradio_tool):
                 self.name = _gradio_tool.name
                 self.description = _gradio_tool.description
@@ -405,7 +405,7 @@ class AsyncTool:
 
     @staticmethod
     def from_langchain(langchain_tool):
-        class LangChainToolWrapper(Tool):
+        class LangChainToolWrapper(AsyncTool):
             skip_forward_signature_validation = True
 
             def __init__(self, _langchain_tool):
@@ -431,7 +431,7 @@ class AsyncTool:
         return LangChainToolWrapper(langchain_tool)
 
 
-async def launch_gradio_demo(tool: Tool):
+async def launch_gradio_demo(tool: AsyncTool):
     try:
         import gradio as gr
     except ImportError:
@@ -479,7 +479,7 @@ async def load_tool(
     trust_remote_code: bool = False,
     **kwargs,
 ):
-    return await Tool.from_hub(repo_id, token=token, trust_remote_code=trust_remote_code, **kwargs)
+    return await AsyncTool.from_hub(repo_id, token=token, trust_remote_code=trust_remote_code, **kwargs)
 
 
 def add_description(description):
@@ -497,7 +497,7 @@ class ToolCollection:
     """
     Tool collections enable loading a collection of tools in the agent's toolbox.
     """
-    def __init__(self, tools: List[Tool]):
+    def __init__(self, tools: List[AsyncTool]):
         self.tools = tools
 
     @classmethod
@@ -506,7 +506,7 @@ class ToolCollection:
         _hub_repo_ids = {item.item_id for item in _collection.items if item.item_type == "space"}
         tools = set()
         for repo_id in _hub_repo_ids:
-            tool = await Tool.from_hub(repo_id, token, trust_remote_code)
+            tool = await AsyncTool.from_hub(repo_id, token, trust_remote_code)
             tools.add(tool)
         return cls(list(tools))
 
@@ -524,14 +524,14 @@ class ToolCollection:
             yield cls(tools)
 
 
-def tool(tool_function: Callable) -> Tool:
+def tool(tool_function: Callable) -> AsyncTool:
     """
     Convert a function into an instance of a dynamically created Tool subclass.
     """
     tool_json_schema = get_json_schema(tool_function)["function"]
     if "return" not in tool_json_schema:
         raise TypeHintParsingException("Tool return type not found: make sure your function has a return type hint!")
-    class SimpleTool(Tool):
+    class SimpleTool(AsyncTool):
         def __init__(self):
             self.is_initialized = True
 
@@ -551,7 +551,7 @@ def tool(tool_function: Callable) -> Tool:
     forward_method_source = f"def forward{str(new_sig)}:\n{textwrap.indent(tool_source_body, '    ')}"
     class_source = (
         textwrap.dedent(f'''
-        class SimpleTool(Tool):
+        class SimpleTool(AsyncTool):
             name: str = "{tool_json_schema["name"]}"
             description: str = {json.dumps(textwrap.dedent(tool_json_schema["description"]).strip())}
             inputs: dict[str, dict[str, str]] = {tool_json_schema["parameters"]["properties"]}
@@ -672,11 +672,11 @@ class AsyncPipelineTool(AsyncTool):
         return decoded_outputs
 
 
-def get_tools_definition_code(tools: Dict[str, Tool]) -> str:
+def get_tools_definition_code(tools: Dict[str, AsyncTool]) -> str:
     tool_codes = []
     for tool in tools.values():
         validate_tool_attributes(tool.__class__, check_imports=False)
-        tool_code = instance_to_source(tool, base_cls=Tool)
+        tool_code = instance_to_source(tool, base_cls=AsyncTool)
         tool_code = tool_code.replace("from smolagents.tools import Tool", "")
         tool_code += f"\n\n{tool.name} = {tool.__class__.__name__}()\n"
         tool_codes.append(tool_code)
