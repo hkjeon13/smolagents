@@ -30,7 +30,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 from .tools import Tool
 from .utils import BASE_BUILTIN_MODULES, truncate_content
 import asyncio
-from local_python_executor import PythonExecutor
+from .local_python_executor import PythonExecutor
 
 logger = logging.getLogger(__name__)
 
