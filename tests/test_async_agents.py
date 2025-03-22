@@ -17,13 +17,14 @@ async def main(args: argparse.Namespace):
     )
 
     agent = AsyncCodeAgent(
+        tools=[],
         model=model,
         add_base_tools=True,
         max_steps=10
     )
 
     question = "트럼프가 말하는 상호관세가 뭐야?"
-    output = await agent.run(question)
+    output = await agent.run(question,stream=False, reset=False)
     print(output)
 
 

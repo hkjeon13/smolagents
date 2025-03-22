@@ -63,7 +63,7 @@ class AsyncOpenAIServerModel(OpenAIServerModel):
         return self.postprocess_message(first_message, tools_to_call_from)
 
 
-class AsyncAzureOpenAIServerModel(OpenAIServerModel):
+class AsyncAzureOpenAIServerModel(AsyncOpenAIServerModel):
     """This model connects to an Azure OpenAI deployment.
 
     Parameters:

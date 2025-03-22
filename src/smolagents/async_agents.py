@@ -83,7 +83,7 @@ class AsyncMultiStepAgentBase:
             task: str,
             stream: bool,
             images: Optional[List[str]] = None,
-    ) -> AsyncGenerator[ActionStep | AgentType, None, None]:
+    ) -> AsyncGenerator[ActionStep | AgentType, None]:
         raise NotImplementedError
 
     async def _execute_step(self, task: str, memory_step: ActionStep) -> Union[None, Any]:
@@ -132,7 +132,7 @@ class AsyncMultiStepAgentBase:
     async def save(self, output_dir: str, relative_path: Optional[str] = None):
         raise NotImplementedError
 
-    async def __call__(task: str, **kwargs):
+    async def __call__(self, task: str, **kwargs):
         raise NotImplementedError
 
     async def _setup_tools(self):
@@ -199,11 +199,11 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
     async def run(
             self,
             task: str,
-            stream: bool,
-            reset: bool,
+            stream: bool = False,
+            reset: bool = True,
             images: Optional[List[str]] = None,
             additional_args: Optional[Dict] = None,
-            max_steps: Optional[int] = None
+            max_steps: Optional[int] = None,
     ):
         max_steps = max_steps or self.max_steps
         self.task = task
@@ -232,15 +232,18 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
             self.python_executor.send_tools({**self.tools, **self.managed_agents})
 
         if stream:
-            # The steps are returned as they are executed through a generator to iterate on.
             return await self._run(task=self.task, max_steps=max_steps, images=images)
-        # Outputs are returned only at the end. We only look at the last step.
-        results = [step async for step in self._run(task=self.task, max_steps=max_steps, images=images)]
+
+        results = await asyncio.gather(
+            *[step async for step in self._run(task=self.task, max_steps=max_steps, images=images)],
+            return_exceptions=True
+        )
+
         return results[-1] if results else None
 
     async def _run(
             self, task: str, max_steps: int, images: List[str] | None = None
-    ) -> AsyncGenerator[ActionStep | AgentType, None, None]:
+    ) -> AsyncGenerator[ActionStep | AgentType, None]:
         final_answer = None
         self.step_number = 1
         step_start_time = time.time()
@@ -409,6 +412,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
                     observation = await available_tools[tool_name].__call__(arguments)
                 else:
                     observation = await available_tools[tool_name].__call__(arguments, sanitize_inputs_outputs=True)
+
             elif isinstance(arguments, dict):
                 for key, value in arguments.items():
                     if isinstance(value, str) and value in self.state:

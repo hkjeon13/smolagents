@@ -26,7 +26,7 @@ class PreTool:
 
 
 class AsyncPythonInterpreterTool(AsyncTool):
-    name = "python_interpreter"
+    name = "async_python_interpreter"
     description = "This is a tool that evaluates python code. It can be used to perform calculations."
     inputs = {
         "code": {
@@ -71,7 +71,7 @@ class AsyncPythonInterpreterTool(AsyncTool):
 
 
 class AsyncFinalAnswerTool(AsyncTool):
-    name = "final_answer"
+    name = "async_final_answer"
     description = "Provides a final answer to the given problem."
     inputs = {"answer": {"type": "any", "description": "The final answer to the problem"}}
     output_type = "any"
@@ -94,7 +94,7 @@ class AsyncUserInputTool(AsyncTool):
 
 
 class AsyncDuckDuckGoSearchTool(AsyncTool):
-    name = "web_search"
+    name = "async_web_search"
     description = (
         "Performs a duckduckgo web search based on your query (think a Google search) then returns the top search results."
     )
@@ -123,7 +123,7 @@ class AsyncDuckDuckGoSearchTool(AsyncTool):
 
 
 class AsyncGoogleSearchTool(AsyncTool):
-    name = "web_search"
+    name = "async_web_search"
     description = "Performs a google web search for your query then returns a string of the top search results."
     inputs = {
         "query": {"type": "string", "description": "The search query to perform."},
@@ -209,7 +209,7 @@ class AsyncGoogleSearchTool(AsyncTool):
 
 
 class AsyncVisitWebpageTool(AsyncTool):
-    name = "visit_webpage"
+    name = "async_visit_webpage"
     description = (
         "Visits a webpage at the given url and reads its content as a markdown string. Use this to browse webpages."
     )
@@ -247,7 +247,7 @@ class AsyncVisitWebpageTool(AsyncTool):
 class AsyncSpeechToTextTool(AsyncPipelineTool):
     default_checkpoint = "openai/whisper-large-v3-turbo"
     description = "This is a tool that transcribes an audio into text. It returns the transcribed text."
-    name = "transcriber"
+    name = "async_transcriber"
     inputs = {
         "audio": {
             "type": "audio",
