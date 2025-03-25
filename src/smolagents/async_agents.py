@@ -544,6 +544,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
                 tool_dicts.append(tool.to_dict())
             except AttributeError:
                 await self.logger.log(f"Failing to convert tool {tool} to dict.", LogLevel.ERROR)
+                continue
 
         tool_requirements = {req for tool in self.tools.values() for req in tool.to_dict()["requirements"]}
         managed_agents_requirements = {
