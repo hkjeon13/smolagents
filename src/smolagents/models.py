@@ -115,6 +115,8 @@ class ChatMessage:
     def dict(self):
         return json.dumps(get_dict_from_nested_dataclasses(self))
 
+    def __dict__(self):
+        return self.dict()
 
 def parse_json_if_needed(arguments: Union[str, dict]) -> Union[str, dict]:
     if isinstance(arguments, dict):
