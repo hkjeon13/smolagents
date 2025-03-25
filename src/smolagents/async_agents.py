@@ -538,7 +538,13 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
             if getattr(self, attr, None):
                 await self.logger.log(f"This agent has {attr}: they will be ignored by this method.", LogLevel.INFO)
 
-        tool_dicts = [tool.to_dict() for tool in self.tools.values()]
+        tool_dicts = []
+        for tool in self.tools.values():
+            try:
+                tool_dicts.append(tool.to_dict())
+            except AttributeError:
+                await self.logger.log(f"Failing to convert tool {tool} to dict.", LogLevel.ERROR)
+
         tool_requirements = {req for tool in self.tools.values() for req in tool.to_dict()["requirements"]}
         managed_agents_requirements = {
             req for managed_agent in self.managed_agents.values() for req in managed_agent.to_dict()["requirements"]
