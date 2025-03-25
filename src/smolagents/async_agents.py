@@ -128,7 +128,7 @@ class AsyncMultiStepAgentBase:
     async def step(self, memory_step: ActionStep) -> Union[None, Any]:
         raise NotImplementedError
 
-    async def save(self, output_dir: str, relative_path: Optional[str] = None):
+    async def save(self, output_dir: str, relative_path: Optional[str] = None, save_tools: bool = True):
         raise NotImplementedError
 
     async def __call__(self, task: str, **kwargs):
@@ -576,7 +576,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
             agent_dict["max_print_outputs_length"] = self.max_print_outputs_length
         return agent_dict
 
-    async def save(self, output_dir: str, relative_path: Optional[str] = None):
+    async def save(self, output_dir: str, relative_path: Optional[str] = None, save_tools: bool = True):
         """
         에이전트의 관련 코드 파일들을 저장합니다.
         - tools 폴더: 각 도구의 코드를 별도 .py 파일로 저장
@@ -605,8 +605,9 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
         # tools 폴더에 각 도구들을 저장 (각 도구의 save 메서드가 비동기로 구현되어 있다고 가정)
         tools_dir = os.path.join(output_dir, "tools")
         await async_make_init_file(tools_dir)
-        for tool in self.tools.values():
-            tool.save(tools_dir, tool_file_name=tool.name, make_gradio_app=False)
+        if save_tools:
+            for tool in self.tools.values():
+                tool.save(tools_dir, tool_file_name=tool.name, make_gradio_app=False)
 
         # 프롬프트 템플릿을 YAML 형식으로 저장
         yaml_prompts = yaml.safe_dump(
