@@ -542,11 +542,18 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
         for tool in self.tools.values():
             try:
                 tool_dicts.append(tool.to_dict())
-            except:
-                await self.logger.log(f"Failing to convert tool {tool} to dict.", LogLevel.ERROR)
+            except Exception as e:
+                await self.logger.log(f"{e}\nFailing to convert tool {tool} to dict.", LogLevel.ERROR)
                 continue
 
-        tool_requirements = {req for tool in self.tools.values() for req in tool.to_dict()["requirements"]}
+        tool_requirements = {}
+        for tool in self.tools.values():
+            try:
+                tool_requirements.update({req for req in tool.to_dict()["requirements"]})
+            except Exception as e:
+                await self.logger.log(f"{e}\nFailing to get requirements for tool {tool}.", LogLevel.ERROR)
+                continue
+
         managed_agents_requirements = {
             req for managed_agent in self.managed_agents.values() for req in managed_agent.to_dict()["requirements"]
         }
