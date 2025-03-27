@@ -409,8 +409,10 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
                 if tool_name in self.managed_agents:
                     observation = await available_tools[tool_name].__call__(arguments)
                 else:
-                    observation = available_tools[tool_name].__call__(arguments, sanitize_inputs_outputs=True)
-
+                    try:
+                        observation = await available_tools[tool_name].__call__(arguments, sanitize_inputs_outputs=True)
+                    except Exception as e:
+                        observation = available_tools[tool_name].__call__(arguments, sanitize_inputs_outputs=True)
             elif isinstance(arguments, dict):
                 for key, value in arguments.items():
                     if isinstance(value, str) and value in self.state:
@@ -418,7 +420,11 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
                 if tool_name in self.managed_agents:
                     observation = await available_tools[tool_name].__call__(**arguments)
                 else:
-                    observation = available_tools[tool_name].__call__(**arguments, sanitize_inputs_outputs=True)
+                    try:
+                        observation = await available_tools[tool_name].__call__(**arguments, sanitize_inputs_outputs=True)
+                    except Exception as e:
+                        observation = available_tools[tool_name].__call__(**arguments, sanitize_inputs_outputs=True)
+
             else:
                 error_msg = f"Arguments passed to tool should be a dict or string: got a {type(arguments)}."
                 raise AsyncAgentExecutionError(error_msg, self.logger)
