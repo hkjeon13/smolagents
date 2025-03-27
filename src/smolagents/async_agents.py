@@ -412,6 +412,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
                     try:
                         observation = await available_tools[tool_name].__call__(arguments, sanitize_inputs_outputs=True)
                     except Exception as e:
+                        print(e)
                         observation = available_tools[tool_name].__call__(arguments, sanitize_inputs_outputs=True)
             elif isinstance(arguments, dict):
                 for key, value in arguments.items():
@@ -423,6 +424,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent):
                     try:
                         observation = await available_tools[tool_name].__call__(**arguments, sanitize_inputs_outputs=True)
                     except Exception as e:
+                        print(e)
                         observation = available_tools[tool_name].__call__(**arguments, sanitize_inputs_outputs=True)
 
             else:
