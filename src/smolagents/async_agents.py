@@ -289,6 +289,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
             )
             try:
                 steps = self._execute_step(action_step)
+                el = ""
                 async for el in steps:
                     yield el
                 final_answer = el
