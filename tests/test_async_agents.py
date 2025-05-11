@@ -267,7 +267,7 @@ class FakeCodeModelFunctionDef(AsyncModel):
     async def generate(self, messages, stop_sequences=None):
         prompt = str(messages)
         if "special_marker" not in prompt:
-            yield ChatMessage(
+            return ChatMessage(
                 role="assistant",
                 content="""
 Thought: Let's define the function. special_marker
@@ -281,7 +281,7 @@ def moving_average(x, w):
     """,
             )
         else:  # We're at step 2
-            yield ChatMessage(
+            return ChatMessage(
                 role="assistant",
                 content="""
 Thought: I can now answer the initial question
@@ -297,7 +297,7 @@ final_answer(res)
 
 class FakeCodeModelSingleStep(AsyncModel):
     async def generate(self, messages, stop_sequences=None, grammar=None, **kwargs):
-        yield ChatMessage(
+        return ChatMessage(
             role="assistant",
             content="""
 Thought: I should multiply 2 by 3.6452. special_marker
@@ -312,7 +312,7 @@ final_answer(result)
 
 class FakeCodeModelNoReturn(AsyncModel):
     async def generate(self, messages, stop_sequences=None, grammar=None, **kwargs):
-        yield ChatMessage(
+        return ChatMessage(
             role="assistant",
             content="""
 Thought: I should multiply 2 by 3.6452. special_marker
@@ -527,7 +527,7 @@ class TestAgent:
     async def test_code_nontrivial_final_answer_works(self):
         class FakeCodeModelFinalAnswer(AsyncModel):
             async def generate(self, messages, stop_sequences=None, grammar=None, **kwargs):
-                yield ChatMessage(
+                return ChatMessage(
                     role="assistant",
                     content="""Code:
 ```py
@@ -620,7 +620,7 @@ class TestMultiStepAgent:
     async def test_logs_display_thoughts_even_if_error(self):
         class FakeJsonModelNoCall(AsyncModel):
             async def generate(self, messages, stop_sequences=None, tools_to_call_from=None):
-                yield ChatMessage(
+                return ChatMessage(
                     role="assistant",
                     content="""I don't want to call tools today""",
                     tool_calls=None,
@@ -634,7 +634,7 @@ class TestMultiStepAgent:
 
         class FakeCodeModelNoCall(AsyncModel):
             async def generate(self, messages, stop_sequences=None):
-                yield ChatMessage(
+                return ChatMessage(
                     role="assistant",
                     content="""I don't want to write an action today""",
                 )
@@ -949,7 +949,7 @@ class TestToolCallingAgent:
         class FakeCodeModel(AsyncModel):
             async def generate(self, messages, tools_to_call_from=None, stop_sequences=None, grammar=None, **kwargs):
                 if len(messages) < 3:
-                    yield ChatMessage(
+                    return ChatMessage(
                         role="assistant",
                         content="",
                         tool_calls=[
@@ -962,7 +962,7 @@ class TestToolCallingAgent:
                     )
                 else:
                     tool_result = messages[-1]["content"][0]["text"].removeprefix("Observation:\n")
-                    yield ChatMessage(
+                    return ChatMessage(
                         role="assistant",
                         content="",
                         tool_calls=[
@@ -1007,7 +1007,7 @@ class TestCodeAgent:
     async def test_errors_logging(self):
         class FakeCodeModel(AsyncModel):
             async def generate(self, messages, stop_sequences=None, grammar=None, **kwargs):
-                yield ChatMessage(role="assistant", content="Code:\n```py\nsecret=3;['1', '2'][secret]\n```")
+                return ChatMessage(role="assistant", content="Code:\n```py\nsecret=3;['1', '2'][secret]\n```")
 
         agent = AsyncCodeAgent(tools=[], model=FakeCodeModel(), verbosity_level=1)
 
@@ -1084,7 +1084,7 @@ class TestCodeAgent:
 
         class FakeCodeModel(AsyncModel):
             async def generate(self, messages, stop_sequences=None, grammar=None, **kwargs):
-                yield ChatMessage(role="assistant", content="Code:\n```py\nfinal_answer(fake_tool_1())\n```")
+                return ChatMessage(role="assistant", content="Code:\n```py\nfinal_answer(fake_tool_1())\n```")
 
         agent = AsyncCodeAgent(tools=[fake_tool_1], model=FakeCodeModel())
 
@@ -1120,7 +1120,7 @@ class TestMultiAgents:
             ):
                 if tools_to_call_from is not None:
                     if len(messages) < 3:
-                        yield ChatMessage(
+                        return ChatMessage(
                             role="assistant",
                             content="",
                             tool_calls=[
@@ -1136,7 +1136,7 @@ class TestMultiAgents:
                         )
                     else:
                         assert "Report on the current US president" in str(messages)
-                        yield ChatMessage(
+                        return ChatMessage(
                             role="assistant",
                             content="",
                             tool_calls=[
@@ -1151,7 +1151,7 @@ class TestMultiAgents:
                         )
                 else:
                     if len(messages) < 3:
-                        yield ChatMessage(
+                        return ChatMessage(
                             role="assistant",
                             content="""
 Thought: Let's call our search agent.
@@ -1163,7 +1163,7 @@ result = search_agent("Who is the current US president?")
                         )
                     else:
                         assert "Report on the current US president" in str(messages)
-                        yield ChatMessage(
+                        return ChatMessage(
                             role="assistant",
                             content="""
 Thought: Let's return the report.
@@ -1187,7 +1187,7 @@ final_answer("Final report.")
                 grammar=None,
                 **kwargs,
             ):
-                yield ChatMessage(
+                return ChatMessage(
                     role="assistant",
                     content="Here is the secret content: FLAG1",
                     tool_calls=[
