@@ -288,7 +288,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
                 step_number=self.step_number, start_time=step_start_time, observations_images=images
             )
             try:
-                steps = await self._execute_step(action_step)
+                steps = self._execute_step(action_step)
                 async for el in steps:
                     yield el
                 final_answer = el
