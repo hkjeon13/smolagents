@@ -31,10 +31,33 @@ class AsyncModel(Model):
         Returns:
             ChatMessage: The generated response.
         """
-        yield "Not implemented yet"
+        raise NotImplementedError("Subclasses must implement this method")
 
     async def __call__(self, *args, **kwargs):
         return self.generate(*args, **kwargs)
+
+    async def generate_stream(
+        self,
+        messages: list[dict[str, str | list[dict]]],
+        stop_sequences: list[str] | None = None,
+        grammar: str | None = None,
+        tools_to_call_from: list[Tool] | None = None,
+        **kwargs,
+    ) -> AsyncGenerator[ChatMessageStreamDelta]:
+        """
+        Generate a response from the model in a streaming manner.
+
+        Args:
+            messages (list[dict[str, str | list[dict]]]): The messages to send to the model.
+            stop_sequences (list[str] | None): The stop sequences to use.
+            grammar (str | None): The grammar to use.
+            tools_to_call_from (list[Tool] | None): The tools to call from.
+            **kwargs: Additional arguments to pass to the model.
+
+        Yields:
+            ChatMessageStreamDelta: The generated response in a streaming manner.
+        """
+        yield "Not implemented yet"
 
 
 class AsyncApiModel(AsyncModel):

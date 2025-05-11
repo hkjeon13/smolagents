@@ -65,10 +65,10 @@ def agent_logger():
     )
 
 
-class FakeToolCallModel(Model):
-    def generate(self, messages, tools_to_call_from=None, stop_sequences=None, grammar=None):
+class FakeToolCallModel(AsyncModel):
+    async def generate(self, messages, tools_to_call_from=None, stop_sequences=None, grammar=None, **kwargs):
         if len(messages) < 3:
-            return ChatMessage(
+            yield ChatMessage(
                 role="assistant",
                 content="",
                 tool_calls=[
@@ -82,7 +82,7 @@ class FakeToolCallModel(Model):
                 ],
             )
         else:
-            return ChatMessage(
+            yield ChatMessage(
                 role="assistant",
                 content="",
                 tool_calls=[
@@ -95,10 +95,10 @@ class FakeToolCallModel(Model):
             )
 
 
-class FakeToolCallModelImage(Model):
-    def generate(self, messages, tools_to_call_from=None, stop_sequences=None, grammar=None):
+class FakeToolCallModelImage(AsyncModel):
+    async def generate(self, messages, tools_to_call_from=None, stop_sequences=None, grammar=None, **kwargs):
         if len(messages) < 3:
-            return ChatMessage(
+            yield ChatMessage(
                 role="assistant",
                 content="",
                 tool_calls=[
@@ -113,7 +113,7 @@ class FakeToolCallModelImage(Model):
                 ],
             )
         else:
-            return ChatMessage(
+            yield ChatMessage(
                 role="assistant",
                 content="",
                 tool_calls=[
@@ -126,10 +126,10 @@ class FakeToolCallModelImage(Model):
             )
 
 
-class FakeToolCallModelVL(Model):
-    def generate(self, messages, tools_to_call_from=None, stop_sequences=None, grammar=None):
+class FakeToolCallModelVL(AsyncModel):
+    async def generate(self, messages, tools_to_call_from=None, stop_sequences=None, grammar=None, **kwargs):
         if len(messages) < 3:
-            return ChatMessage(
+            yield ChatMessage(
                 role="assistant",
                 content="",
                 tool_calls=[
@@ -147,7 +147,7 @@ class FakeToolCallModelVL(Model):
                 ],
             )
         else:
-            return ChatMessage(
+            yield ChatMessage(
                 role="assistant",
                 content="",
                 tool_calls=[
@@ -160,11 +160,11 @@ class FakeToolCallModelVL(Model):
             )
 
 
-class FakeCodeModel(Model):
-    def generate(self, messages, stop_sequences=None, grammar=None):
+class FakeCodeModel(AsyncModel):
+    async def generate(self, messages, stop_sequences=None, grammar=None, **kwargs):
         prompt = str(messages)
         if "special_marker" not in prompt:
-            return ChatMessage(
+            yield ChatMessage(
                 role="assistant",
                 content="""
 Thought: I should multiply 2 by 3.6452. special_marker
@@ -175,7 +175,7 @@ result = 2**3.6452
 """,
             )
         else:  # We're at step 2
-            return ChatMessage(
+            yield ChatMessage(
                 role="assistant",
                 content="""
 Thought: I can now answer the initial question
@@ -187,11 +187,11 @@ final_answer(7.2904)
             )
 
 
-class FakeCodeModelError(Model):
-    def generate(self, messages, stop_sequences=None):
+class FakeCodeModelError(AsyncModel):
+    async def generate(self, messages, stop_sequences=None):
         prompt = str(messages)
         if "special_marker" not in prompt:
-            return ChatMessage(
+            yield ChatMessage(
                 role="assistant",
                 content="""
 Thought: I should multiply 2 by 3.6452. special_marker
@@ -206,7 +206,7 @@ error_function()
 """,
             )
         else:  # We're at step 2
-            return ChatMessage(
+            yield ChatMessage(
                 role="assistant",
                 content="""
 Thought: I faced an error in the previous step.
@@ -218,11 +218,11 @@ final_answer("got an error")
             )
 
 
-class FakeCodeModelSyntaxError(Model):
-    def generate(self, messages, stop_sequences=None):
+class FakeCodeModelSyntaxError(AsyncModel):
+    async def generate(self, messages, stop_sequences=None):
         prompt = str(messages)
         if "special_marker" not in prompt:
-            return ChatMessage(
+            yield ChatMessage(
                 role="assistant",
                 content="""
 Thought: I should multiply 2 by 3.6452. special_marker
@@ -236,7 +236,7 @@ print("Ok, calculation done!")
 """,
             )
         else:  # We're at step 2
-            return ChatMessage(
+            yield ChatMessage(
                 role="assistant",
                 content="""
 Thought: I can now answer the initial question
@@ -248,9 +248,9 @@ final_answer("got an error")
             )
 
 
-class FakeCodeModelImport(Model):
-    def generate(self, messages, stop_sequences=None):
-        return ChatMessage(
+class FakeCodeModelImport(AsyncModel):
+    async def generate(self, messages, stop_sequences=None):
+        yield ChatMessage(
             role="assistant",
             content="""
 Thought: I can answer the question
@@ -263,11 +263,11 @@ final_answer("got an error")
         )
 
 
-class FakeCodeModelFunctionDef(Model):
-    def generate(self, messages, stop_sequences=None):
+class FakeCodeModelFunctionDef(AsyncModel):
+    async def generate(self, messages, stop_sequences=None):
         prompt = str(messages)
         if "special_marker" not in prompt:
-            return ChatMessage(
+            yield ChatMessage(
                 role="assistant",
                 content="""
 Thought: Let's define the function. special_marker
@@ -281,7 +281,7 @@ def moving_average(x, w):
     """,
             )
         else:  # We're at step 2
-            return ChatMessage(
+            yield ChatMessage(
                 role="assistant",
                 content="""
 Thought: I can now answer the initial question
@@ -295,9 +295,9 @@ final_answer(res)
             )
 
 
-class FakeCodeModelSingleStep(Model):
-    def generate(self, messages, stop_sequences=None, grammar=None):
-        return ChatMessage(
+class FakeCodeModelSingleStep(AsyncModel):
+    async def generate(self, messages, stop_sequences=None, grammar=None, **kwargs):
+        yield ChatMessage(
             role="assistant",
             content="""
 Thought: I should multiply 2 by 3.6452. special_marker
@@ -310,9 +310,9 @@ final_answer(result)
         )
 
 
-class FakeCodeModelNoReturn(Model):
-    def generate(self, messages, stop_sequences=None, grammar=None):
-        return ChatMessage(
+class FakeCodeModelNoReturn(AsyncModel):
+    async def generate(self, messages, stop_sequences=None, grammar=None, **kwargs):
+        yield ChatMessage(
             role="assistant",
             content="""
 Thought: I should multiply 2 by 3.6452. special_marker
@@ -326,16 +326,16 @@ print(result)
 
 
 class TestAgent:
-    def test_fake_toolcalling_agent(self):
-        agent = ToolCallingAgent(tools=[PythonInterpreterTool()], model=FakeToolCallModel())
-        output = agent.run("What is 2 multiplied by 3.6452?")
+    async def test_fake_toolcalling_agent(self):
+        agent = AsyncToolCallingAgent(tools=[PythonInterpreterTool()], model=FakeToolCallModel())
+        output = await agent.run("What is 2 multiplied by 3.6452?")
         assert isinstance(output, str)
         assert "7.2904" in output
         assert agent.memory.steps[0].task == "What is 2 multiplied by 3.6452?"
         assert "7.2904" in agent.memory.steps[1].observations
         assert agent.memory.steps[2].model_output == "Called Tool: 'final_answer' with arguments: {'answer': '7.2904'}"
 
-    def test_toolcalling_agent_handles_image_tool_outputs(self, shared_datadir):
+    async def test_toolcalling_agent_handles_image_tool_outputs(self, shared_datadir):
         import PIL.Image
 
         @tool
@@ -350,12 +350,12 @@ class TestAgent:
 
             return PIL.Image.open(shared_datadir / "000000039769.png")
 
-        agent = ToolCallingAgent(tools=[fake_image_generation_tool], model=FakeToolCallModelImage())
-        output = agent.run("Make me an image.")
+        agent = AsyncToolCallingAgent(tools=[fake_image_generation_tool], model=FakeToolCallModelImage())
+        output = await agent.run("Make me an image.")
         assert isinstance(output, AgentImage)
         assert isinstance(agent.state["image.png"], PIL.Image.Image)
 
-    def test_toolcalling_agent_handles_image_inputs(self, shared_datadir):
+    async def test_toolcalling_agent_handles_image_inputs(self, shared_datadir):
         import PIL.Image
 
         image = PIL.Image.open(shared_datadir / "000000039769.png")  # dummy input
@@ -370,13 +370,13 @@ class TestAgent:
             """
             return "The image is a cat."
 
-        agent = ToolCallingAgent(tools=[fake_image_understanding_tool], model=FakeToolCallModelVL())
-        output = agent.run("Caption this image.", images=[image])
+        agent = AsyncToolCallingAgent(tools=[fake_image_understanding_tool], model=FakeToolCallModelVL())
+        output = await agent.run("Caption this image.", images=[image])
         assert output == "The image is a cat."
 
-    def test_fake_code_agent(self):
-        agent = CodeAgent(tools=[PythonInterpreterTool()], model=FakeCodeModel())
-        output = agent.run("What is 2 multiplied by 3.6452?")
+    async def test_fake_code_agent(self):
+        agent = AsyncCodeAgent(tools=[PythonInterpreterTool()], model=FakeCodeModel())
+        output = await agent.run("What is 2 multiplied by 3.6452?")
         assert isinstance(output, float)
         assert output == 7.2904
         assert agent.memory.steps[0].task == "What is 2 multiplied by 3.6452?"
@@ -384,112 +384,112 @@ class TestAgent:
             ToolCall(name="python_interpreter", arguments="final_answer(7.2904)", id="call_2")
         ]
 
-    def test_additional_args_added_to_task(self):
-        agent = CodeAgent(tools=[], model=FakeCodeModel())
-        agent.run(
+    async def test_additional_args_added_to_task(self):
+        agent = AsyncCodeAgent(tools=[], model=FakeCodeModel())
+        await agent.run(
             "What is 2 multiplied by 3.6452?",
             additional_args={"instruction": "Remember this."},
         )
         assert "Remember this" in agent.task
 
-    def test_reset_conversations(self):
-        agent = CodeAgent(tools=[PythonInterpreterTool()], model=FakeCodeModel())
-        output = agent.run("What is 2 multiplied by 3.6452?", reset=True)
+    async def test_reset_conversations(self):
+        agent = AsyncCodeAgent(tools=[PythonInterpreterTool()], model=FakeCodeModel())
+        output = await agent.run("What is 2 multiplied by 3.6452?", reset=True)
         assert output == 7.2904
         assert len(agent.memory.steps) == 3
 
-        output = agent.run("What is 2 multiplied by 3.6452?", reset=False)
+        output = await agent.run("What is 2 multiplied by 3.6452?", reset=False)
         assert output == 7.2904
         assert len(agent.memory.steps) == 5
 
-        output = agent.run("What is 2 multiplied by 3.6452?", reset=True)
+        output = await agent.run("What is 2 multiplied by 3.6452?", reset=True)
         assert output == 7.2904
         assert len(agent.memory.steps) == 3
 
-    def test_setup_agent_with_empty_toolbox(self):
-        ToolCallingAgent(model=FakeToolCallModel(), tools=[])
+    async def test_setup_agent_with_empty_toolbox(self):
+        AsyncToolCallingAgent(model=FakeToolCallModel(), tools=[])
 
-    def test_fails_max_steps(self):
-        agent = CodeAgent(
+    async def test_fails_max_steps(self):
+        agent = AsyncCodeAgent(
             tools=[PythonInterpreterTool()],
             model=FakeCodeModelNoReturn(),  # use this callable because it never ends
             max_steps=5,
         )
-        answer = agent.run("What is 2 multiplied by 3.6452?")
+        answer = await agent.run("What is 2 multiplied by 3.6452?")
         assert len(agent.memory.steps) == 7  # Task step + 5 action steps + Final answer
         assert type(agent.memory.steps[-1].error) is AgentMaxStepsError
         assert isinstance(answer, str)
 
-        agent = CodeAgent(
+        agent = AsyncCodeAgent(
             tools=[PythonInterpreterTool()],
             model=FakeCodeModelNoReturn(),  # use this callable because it never ends
             max_steps=5,
         )
-        answer = agent.run("What is 2 multiplied by 3.6452?", max_steps=3)
+        answer = await agent.run("What is 2 multiplied by 3.6452?", max_steps=3)
         assert len(agent.memory.steps) == 5  # Task step + 3 action steps + Final answer
         assert type(agent.memory.steps[-1].error) is AgentMaxStepsError
         assert isinstance(answer, str)
 
-    def test_tool_descriptions_get_baked_in_system_prompt(self):
+    async def test_tool_descriptions_get_baked_in_system_prompt(self):
         tool = PythonInterpreterTool()
         tool.name = "fake_tool_name"
         tool.description = "fake_tool_description"
-        agent = CodeAgent(tools=[tool], model=FakeCodeModel())
-        agent.run("Empty task")
+        agent = AsyncCodeAgent(tools=[tool], model=FakeCodeModel())
+        await agent.run("Empty task")
         assert agent.system_prompt is not None
         assert f"def {tool.name}(" in agent.system_prompt
         assert f'"""{tool.description}' in agent.system_prompt
 
-    def test_module_imports_get_baked_in_system_prompt(self):
-        agent = CodeAgent(tools=[], model=FakeCodeModel())
-        agent.run("Empty task")
+    async def test_module_imports_get_baked_in_system_prompt(self):
+        agent = AsyncCodeAgent(tools=[], model=FakeCodeModel())
+        await agent.run("Empty task")
         for module in BASE_BUILTIN_MODULES:
             assert module in agent.system_prompt
 
-    def test_init_agent_with_different_toolsets(self):
+    async def test_init_agent_with_different_toolsets(self):
         toolset_1 = []
-        agent = CodeAgent(tools=toolset_1, model=FakeCodeModel())
+        agent = AsyncCodeAgent(tools=toolset_1, model=FakeCodeModel())
         assert len(agent.tools) == 1  # when no tools are provided, only the final_answer tool is added by default
 
         toolset_2 = [PythonInterpreterTool(), PythonInterpreterTool()]
         with pytest.raises(ValueError) as e:
-            agent = CodeAgent(tools=toolset_2, model=FakeCodeModel())
+            agent = AsyncCodeAgent(tools=toolset_2, model=FakeCodeModel())
         assert "Each tool or managed_agent should have a unique name!" in str(e)
 
         with pytest.raises(ValueError) as e:
             agent.name = "python_interpreter"
             agent.description = "empty"
-            CodeAgent(tools=[PythonInterpreterTool()], model=FakeCodeModel(), managed_agents=[agent])
+            AsyncCodeAgent(tools=[PythonInterpreterTool()], model=FakeCodeModel(), managed_agents=[agent])
         assert "Each tool or managed_agent should have a unique name!" in str(e)
 
         # check that python_interpreter base tool does not get added to CodeAgent
-        agent = CodeAgent(tools=[], model=FakeCodeModel(), add_base_tools=True)
+        agent = AsyncCodeAgent(tools=[], model=FakeCodeModel(), add_base_tools=True)
         assert len(agent.tools) == 3  # added final_answer tool + search + visit_webpage
 
         # check that python_interpreter base tool gets added to ToolCallingAgent
-        agent = ToolCallingAgent(tools=[], model=FakeCodeModel(), add_base_tools=True)
+        agent = AsyncToolCallingAgent(tools=[], model=FakeCodeModel(), add_base_tools=True)
         assert len(agent.tools) == 4  # added final_answer tool + search + visit_webpage
 
-    def test_function_persistence_across_steps(self):
-        agent = CodeAgent(
+    async def test_function_persistence_across_steps(self):
+        agent = AsyncCodeAgent(
             tools=[],
             model=FakeCodeModelFunctionDef(),
             max_steps=2,
             additional_authorized_imports=["numpy"],
         )
-        res = agent.run("ok")
+        res = await agent.run("ok")
         assert res[0] == 0.5
 
-    def test_init_managed_agent(self):
-        agent = CodeAgent(tools=[], model=FakeCodeModelFunctionDef(), name="managed_agent", description="Empty")
+    async def test_init_managed_agent(self):
+        agent = AsyncCodeAgent(tools=[], model=FakeCodeModelFunctionDef(), name="managed_agent", description="Empty")
         assert agent.name == "managed_agent"
         assert agent.description == "Empty"
 
-    def test_agent_description_gets_correctly_inserted_in_system_prompt(self):
-        managed_agent = CodeAgent(
+    async def test_agent_description_gets_correctly_inserted_in_system_prompt(self):
+        managed_agent = AsyncCodeAgent(
             tools=[], model=FakeCodeModelFunctionDef(), name="managed_agent", description="Empty"
         )
-        manager_agent = CodeAgent(
+        manager_agent = AsyncCodeAgent(
             tools=[],
             model=FakeCodeModelFunctionDef(),
             managed_agents=[managed_agent],
@@ -498,15 +498,15 @@ class TestAgent:
         assert "{{managed_agents_descriptions}}" not in managed_agent.system_prompt
         assert "You can also give tasks to team members." in manager_agent.system_prompt
 
-    def test_replay_shows_logs(self, agent_logger):
-        agent = CodeAgent(
+    async def test_replay_shows_logs(self, agent_logger):
+        agent = AsyncCodeAgent(
             tools=[],
             model=FakeCodeModelImport(),
             verbosity_level=0,
             additional_authorized_imports=["numpy"],
             logger=agent_logger,
         )
-        agent.run("Count to 3")
+        await agent.run("Count to 3")
 
         str_output = agent_logger.console.export_text()
 
@@ -514,20 +514,20 @@ class TestAgent:
         assert 'final_answer("got' in str_output
         assert "```<end_code>" in str_output
 
-        agent = ToolCallingAgent(tools=[PythonInterpreterTool()], model=FakeToolCallModel(), verbosity_level=0)
+        agent = AsyncToolCallingAgent(tools=[PythonInterpreterTool()], model=FakeToolCallModel(), verbosity_level=0)
         agent.logger = agent_logger
 
-        agent.run("What is 2 multiplied by 3.6452?")
+        await agent.run("What is 2 multiplied by 3.6452?")
         agent.replay()
 
         str_output = agent_logger.console.export_text()
         assert "Called Tool" in str_output
         assert "arguments" in str_output
 
-    def test_code_nontrivial_final_answer_works(self):
-        class FakeCodeModelFinalAnswer(Model):
-            def generate(self, messages, stop_sequences=None, grammar=None):
-                return ChatMessage(
+    async def test_code_nontrivial_final_answer_works(self):
+        class FakeCodeModelFinalAnswer(AsyncModel):
+            async def generate(self, messages, stop_sequences=None, grammar=None, **kwargs):
+                yield ChatMessage(
                     role="assistant",
                     content="""Code:
 ```py
@@ -538,56 +538,27 @@ nested_answer()
 ```<end_code>""",
                 )
 
-        agent = CodeAgent(tools=[], model=FakeCodeModelFinalAnswer())
+        agent = AsyncCodeAgent(tools=[], model=FakeCodeModelFinalAnswer())
 
-        output = agent.run("Count to 3")
+        output = await agent.run("Count to 3")
         assert output == "Correct!"
 
-    def test_transformers_toolcalling_agent(self):
-        @tool
-        def weather_api(location: str, celsius: bool = False) -> str:
-            """
-            Gets the weather in the next days at given location.
-            Secretly this tool does not care about the location, it hates the weather everywhere.
-
-            Args:
-                location: the location
-                celsius: the temperature type
-            """
-            return "The weather is UNGODLY with torrential rains and temperatures below -10°C"
-
-        model = TransformersModel(
-            model_id="HuggingFaceTB/SmolLM2-360M-Instruct",
-            max_new_tokens=100,
-            device_map="auto",
-            do_sample=False,
-        )
-        agent = ToolCallingAgent(model=model, tools=[weather_api], max_steps=1, verbosity_level=10)
-        task = "What is the weather in Paris? "
-        agent.run(task)
-        assert agent.memory.steps[0].task == task
-        assert agent.memory.steps[1].tool_calls[0].name == "weather_api"
-        step_memory_dict = agent.memory.get_succinct_steps()[1]
-        assert step_memory_dict["model_output_message"].tool_calls[0].function.name == "weather_api"
-        assert step_memory_dict["model_output_message"].raw["completion_kwargs"]["max_new_tokens"] == 100
-        assert "model_input_messages" in agent.memory.get_full_steps()[1]
-
-    def test_final_answer_checks(self):
+    async def test_final_answer_checks(self):
         def check_always_fails(final_answer, agent_memory):
             assert False, "Error raised in check"
 
-        agent = CodeAgent(model=FakeCodeModel(), tools=[], final_answer_checks=[check_always_fails])
-        agent.run("Dummy task.")
+        agent = AsyncCodeAgent(model=FakeCodeModel(), tools=[], final_answer_checks=[check_always_fails])
+        await agent.run("Dummy task.")
         assert "Error raised in check" in str(agent.write_memory_to_messages())
 
-    def test_generation_errors_are_raised(self):
-        class FakeCodeModel(Model):
-            def generate(self, messages, stop_sequences=None, grammar=None):
+    async def test_generation_errors_are_raised(self):
+        class FakeCodeModel(AsyncModel):
+            async def generate(self, messages, stop_sequences=None, grammar=None, **kwargs):
                 assert False, "Generation failed"
 
-        agent = CodeAgent(model=FakeCodeModel(), tools=[])
+        agent = AsyncCodeAgent(model=FakeCodeModel(), tools=[])
         with pytest.raises(AgentGenerationError) as e:
-            agent.run("Dummy task.")
+            await agent.run("Dummy task.")
         assert len(agent.memory.steps) == 2
         assert "Generation failed" in str(e)
 
@@ -615,7 +586,7 @@ class MockAgent:
         self.description = description
 
 
-class DummyMultiStepAgent(MultiStepAgent):
+class DummyMultiStepAgent(AsyncMultiStepAgent):
     def step(self, memory_step: ActionStep) -> Generator[None]:
         yield None
 
@@ -624,12 +595,12 @@ class DummyMultiStepAgent(MultiStepAgent):
 
 
 class TestMultiStepAgent:
-    def test_instantiation_disables_logging_to_terminal(self):
+    async def test_instantiation_disables_logging_to_terminal(self):
         fake_model = MagicMock()
         agent = DummyMultiStepAgent(tools=[], model=fake_model)
         assert agent.logger.level == -1, "logging to terminal should be disabled for testing using a fixture"
 
-    def test_instantiation_with_prompt_templates(self, prompt_templates):
+    async def test_instantiation_with_prompt_templates(self, prompt_templates):
         agent = DummyMultiStepAgent(tools=[], model=MagicMock(), prompt_templates=prompt_templates)
         assert agent.prompt_templates == prompt_templates
         assert agent.prompt_templates["system_prompt"] == "This is a test system prompt."
@@ -641,47 +612,47 @@ class TestMultiStepAgent:
         "tools, expected_final_answer_tool",
         [([], FinalAnswerTool), ([CustomFinalAnswerTool()], CustomFinalAnswerTool)],
     )
-    def test_instantiation_with_final_answer_tool(self, tools, expected_final_answer_tool):
+    async def test_instantiation_with_final_answer_tool(self, tools, expected_final_answer_tool):
         agent = DummyMultiStepAgent(tools=tools, model=MagicMock())
         assert "final_answer" in agent.tools
         assert isinstance(agent.tools["final_answer"], expected_final_answer_tool)
 
-    def test_logs_display_thoughts_even_if_error(self):
-        class FakeJsonModelNoCall(Model):
-            def generate(self, messages, stop_sequences=None, tools_to_call_from=None):
-                return ChatMessage(
+    async def test_logs_display_thoughts_even_if_error(self):
+        class FakeJsonModelNoCall(AsyncModel):
+            async def generate(self, messages, stop_sequences=None, tools_to_call_from=None):
+                yield ChatMessage(
                     role="assistant",
                     content="""I don't want to call tools today""",
                     tool_calls=None,
                     raw="""I don't want to call tools today""",
                 )
 
-        agent_toolcalling = ToolCallingAgent(model=FakeJsonModelNoCall(), tools=[], max_steps=1, verbosity_level=10)
+        agent_toolcalling = AsyncToolCallingAgent(model=FakeJsonModelNoCall(), tools=[], max_steps=1, verbosity_level=10)
         with agent_toolcalling.logger.console.capture() as capture:
             agent_toolcalling.run("Dummy task")
         assert "don't" in capture.get() and "want" in capture.get()
 
-        class FakeCodeModelNoCall(Model):
-            def generate(self, messages, stop_sequences=None):
-                return ChatMessage(
+        class FakeCodeModelNoCall(AsyncModel):
+            async def generate(self, messages, stop_sequences=None):
+                yield ChatMessage(
                     role="assistant",
                     content="""I don't want to write an action today""",
                 )
 
-        agent_code = CodeAgent(model=FakeCodeModelNoCall(), tools=[], max_steps=1, verbosity_level=10)
+        agent_code = AsyncCodeAgent(model=FakeCodeModelNoCall(), tools=[], max_steps=1, verbosity_level=10)
         with agent_code.logger.console.capture() as capture:
             agent_code.run("Dummy task")
         assert "don't" in capture.get() and "want" in capture.get()
 
-    def test_step_number(self):
+    async def test_step_number(self):
         fake_model = MagicMock()
         fake_model.last_input_token_count = 10
         fake_model.last_output_token_count = 20
         max_steps = 2
-        agent = CodeAgent(tools=[], model=fake_model, max_steps=max_steps)
+        agent = AsyncCodeAgent(tools=[], model=fake_model, max_steps=max_steps)
         assert hasattr(agent, "step_number"), "step_number attribute should be defined"
         assert agent.step_number == 0, "step_number should be initialized to 0"
-        agent.run("Test task")
+        await agent.run("Test task")
         assert hasattr(agent, "step_number"), "step_number attribute should be defined"
         assert agent.step_number == max_steps + 1, "step_number should be max_steps + 1 after run method is called"
 
@@ -708,9 +679,9 @@ class TestMultiStepAgent:
             ),
         ],
     )
-    def test_planning_step(self, step, expected_messages_list):
+    async def test_planning_step(self, step, expected_messages_list):
         fake_model = MagicMock()
-        agent = CodeAgent(
+        agent = AsyncCodeAgent(
             tools=[],
             model=fake_model,
         )
@@ -807,10 +778,10 @@ class TestMultiStepAgent:
             ),
         ],
     )
-    def test_provide_final_answer(self, images, expected_messages_list):
+    async def test_provide_final_answer(self, images, expected_messages_list):
         fake_model = MagicMock()
         fake_model.return_value.content = "Final answer."
-        agent = CodeAgent(
+        agent = AsyncCodeAgent(
             tools=[],
             model=fake_model,
         )
@@ -846,7 +817,7 @@ class TestMultiStepAgent:
                 for content, expected_content in zip(message["content"], expected_message["content"]):
                     assert content == expected_content
 
-    def test_interrupt(self):
+    async def test_interrupt(self):
         fake_model = MagicMock()
         fake_model.return_value.content = "Model output."
         fake_model.last_input_token_count = None
@@ -854,13 +825,13 @@ class TestMultiStepAgent:
         def interrupt_callback(memory_step, agent):
             agent.interrupt()
 
-        agent = CodeAgent(
+        agent = AsyncCodeAgent(
             tools=[],
             model=fake_model,
             step_callbacks=[interrupt_callback],
         )
         with pytest.raises(AgentError) as e:
-            agent.run("Test task")
+            await agent.run("Test task")
         assert "Agent interrupted" in str(e)
 
     @pytest.mark.parametrize(
@@ -898,7 +869,7 @@ class TestMultiStepAgent:
             ),
         ],
     )
-    def test_validate_tools_and_managed_agents(self, tools, managed_agents, name, expectation):
+    async def test_validate_tools_and_managed_agents(self, tools, managed_agents, name, expectation):
         fake_model = MagicMock()
         with expectation:
             DummyMultiStepAgent(
@@ -908,7 +879,7 @@ class TestMultiStepAgent:
                 managed_agents=managed_agents,
             )
 
-    def test_from_dict(self):
+    async def test_from_dict(self):
         # Create a test agent dictionary
         agent_dict = {
             "model": {"class": "TransformersModel", "data": {"model_id": "test/model"}},
@@ -960,83 +931,9 @@ class TestMultiStepAgent:
 
 
 class TestToolCallingAgent:
-    @patch("huggingface_hub.InferenceClient")
-    def test_toolcalling_agent_api(self, mock_inference_client):
-        mock_client = mock_inference_client.return_value
-        mock_response = mock_client.chat_completion.return_value
-        mock_response.choices[0].message = ChatCompletionOutputMessage(
-            role="assistant", content='{"name": "weather_api", "arguments": {"location": "Paris", "date": "today"}}'
-        )
-        mock_response.usage.prompt_tokens = 10
-        mock_response.usage.completion_tokens = 20
 
-        model = InferenceClientModel(model_id="test-model")
 
-        from smolagents import tool
-
-        @tool
-        def weather_api(location: str, date: str) -> str:
-            """
-            Gets the weather in the next days at given location.
-            Args:
-                location: the location
-                date: the date
-            """
-            return f"The weather in {location} on date:{date} is sunny."
-
-        agent = ToolCallingAgent(model=model, tools=[weather_api], max_steps=1)
-        agent.run("What's the weather in Paris?")
-        assert agent.memory.steps[0].task == "What's the weather in Paris?"
-        assert agent.memory.steps[1].tool_calls[0].name == "weather_api"
-        assert agent.memory.steps[1].tool_calls[0].arguments == {"location": "Paris", "date": "today"}
-        assert agent.memory.steps[1].observations == "The weather in Paris on date:today is sunny."
-
-        mock_response.choices[0].message = ChatCompletionOutputMessage(
-            role="assistant",
-            content=None,
-            tool_calls=[
-                ChatCompletionOutputToolCall(
-                    function=ChatCompletionOutputFunctionDefinition(
-                        name="weather_api", arguments='{"location": "Paris", "date": "today"}'
-                    ),
-                    id="call_0",
-                    type="function",
-                )
-            ],
-        )
-
-        agent.run("What's the weather in Paris?")
-        assert agent.memory.steps[0].task == "What's the weather in Paris?"
-        assert agent.memory.steps[1].tool_calls[0].name == "weather_api"
-        assert agent.memory.steps[1].tool_calls[0].arguments == {"location": "Paris", "date": "today"}
-        assert agent.memory.steps[1].observations == "The weather in Paris on date:today is sunny."
-
-    @patch("huggingface_hub.InferenceClient")
-    def test_toolcalling_agent_api_misformatted_output(self, mock_inference_client):
-        """Test that even misformatted json blobs don't interrupt the run for a ToolCallingAgent."""
-        mock_client = mock_inference_client.return_value
-        mock_response = mock_client.chat_completion.return_value
-        mock_response.choices[0].message = ChatCompletionOutputMessage(
-            role="assistant", content='{"name": weather_api", "arguments": {"location": "Paris", "date": "today"}}'
-        )
-
-        mock_response.usage.prompt_tokens = 10
-        mock_response.usage.completion_tokens = 20
-
-        model = InferenceClientModel(model_id="test-model")
-
-        logger = AgentLogger(console=Console(markup=False, no_color=True))
-
-        agent = ToolCallingAgent(model=model, tools=[], max_steps=2, verbosity_level=1, logger=logger)
-        with agent.logger.console.capture() as capture:
-            agent.run("What's the weather in Paris?")
-        assert agent.memory.steps[0].task == "What's the weather in Paris?"
-        assert agent.memory.steps[1].tool_calls is None
-        assert "The JSON blob you used is invalid" in agent.memory.steps[1].error.message
-        assert "Error while parsing" in capture.get()
-        assert len(agent.memory.steps) == 4
-
-    def test_change_tools_after_init(self):
+    async def test_change_tools_after_init(self):
         from smolagents import tool
 
         @tool
@@ -1049,10 +946,10 @@ class TestToolCallingAgent:
             """Fake tool"""
             return "2"
 
-        class FakeCodeModel(Model):
-            def generate(self, messages, tools_to_call_from=None, stop_sequences=None, grammar=None):
+        class FakeCodeModel(AsyncModel):
+            async def generate(self, messages, tools_to_call_from=None, stop_sequences=None, grammar=None, **kwargs):
                 if len(messages) < 3:
-                    return ChatMessage(
+                    yield ChatMessage(
                         role="assistant",
                         content="",
                         tool_calls=[
@@ -1065,7 +962,7 @@ class TestToolCallingAgent:
                     )
                 else:
                     tool_result = messages[-1]["content"][0]["text"].removeprefix("Observation:\n")
-                    return ChatMessage(
+                    yield ChatMessage(
                         role="assistant",
                         content="",
                         tool_calls=[
@@ -1079,19 +976,19 @@ class TestToolCallingAgent:
                         ],
                     )
 
-        agent = ToolCallingAgent(tools=[fake_tool_1], model=FakeCodeModel())
+        agent = AsyncToolCallingAgent(tools=[fake_tool_1], model=FakeCodeModel())
 
         agent.tools["final_answer"] = CustomFinalAnswerTool()
         agent.tools["fake_tool_1"] = fake_tool_2
 
-        answer = agent.run("Fake task.")
+        answer = await agent.run("Fake task.")
         assert answer == "2CUSTOM"
 
 
 class TestCodeAgent:
     @pytest.mark.parametrize("provide_run_summary", [False, True])
-    def test_call_with_provide_run_summary(self, provide_run_summary):
-        agent = CodeAgent(tools=[], model=MagicMock(), provide_run_summary=provide_run_summary)
+    async def test_call_with_provide_run_summary(self, provide_run_summary):
+        agent = AsyncCodeAgent(tools=[], model=MagicMock(), provide_run_summary=provide_run_summary)
         assert agent.provide_run_summary is provide_run_summary
         agent.managed_agent_prompt = "Task: {task}"
         agent.name = "test_agent"
@@ -1107,58 +1004,58 @@ class TestCodeAgent:
             )
         assert result == expected_summary
 
-    def test_errors_logging(self):
-        class FakeCodeModel(Model):
-            def generate(self, messages, stop_sequences=None, grammar=None):
-                return ChatMessage(role="assistant", content="Code:\n```py\nsecret=3;['1', '2'][secret]\n```")
+    async def test_errors_logging(self):
+        class FakeCodeModel(AsyncModel):
+            async def generate(self, messages, stop_sequences=None, grammar=None, **kwargs):
+                yield ChatMessage(role="assistant", content="Code:\n```py\nsecret=3;['1', '2'][secret]\n```")
 
-        agent = CodeAgent(tools=[], model=FakeCodeModel(), verbosity_level=1)
+        agent = AsyncCodeAgent(tools=[], model=FakeCodeModel(), verbosity_level=1)
 
         with agent.logger.console.capture() as capture:
-            agent.run("Test request")
+            await agent.run("Test request")
         assert "secret\\\\" in repr(capture.get())
 
-    def test_missing_import_triggers_advice_in_error_log(self):
+    async def test_missing_import_triggers_advice_in_error_log(self):
         # Set explicit verbosity level to 1 to override the default verbosity level of -1 set in CI fixture
-        agent = CodeAgent(tools=[], model=FakeCodeModelImport(), verbosity_level=1)
+        agent = AsyncCodeAgent(tools=[], model=FakeCodeModelImport(), verbosity_level=1)
 
         with agent.logger.console.capture() as capture:
-            agent.run("Count to 3")
+            await agent.run("Count to 3")
         str_output = capture.get()
         assert "`additional_authorized_imports`" in str_output.replace("\n", "")
 
-    def test_errors_show_offending_line_and_error(self):
-        agent = CodeAgent(tools=[PythonInterpreterTool()], model=FakeCodeModelError())
-        output = agent.run("What is 2 multiplied by 3.6452?")
+    async def test_errors_show_offending_line_and_error(self):
+        agent = AsyncCodeAgent(tools=[PythonInterpreterTool()], model=FakeCodeModelError())
+        output = await agent.run("What is 2 multiplied by 3.6452?")
         assert isinstance(output, AgentText)
         assert output == "got an error"
         assert "Code execution failed at line 'error_function()'" in str(agent.memory.steps[1].error)
         assert "ValueError" in str(agent.memory.steps)
 
-    def test_error_saves_previous_print_outputs(self):
-        agent = CodeAgent(tools=[PythonInterpreterTool()], model=FakeCodeModelError(), verbosity_level=10)
-        agent.run("What is 2 multiplied by 3.6452?")
+    async def test_error_saves_previous_print_outputs(self):
+        agent = AsyncCodeAgent(tools=[PythonInterpreterTool()], model=FakeCodeModelError(), verbosity_level=10)
+        await agent.run("What is 2 multiplied by 3.6452?")
         assert "Flag!" in str(agent.memory.steps[1].observations)
 
-    def test_syntax_error_show_offending_lines(self):
-        agent = CodeAgent(tools=[PythonInterpreterTool()], model=FakeCodeModelSyntaxError())
-        output = agent.run("What is 2 multiplied by 3.6452?")
+    async def test_syntax_error_show_offending_lines(self):
+        agent = AsyncCodeAgent(tools=[PythonInterpreterTool()], model=FakeCodeModelSyntaxError())
+        output = await agent.run("What is 2 multiplied by 3.6452?")
         assert isinstance(output, AgentText)
         assert output == "got an error"
         assert '    print("Failing due to unexpected indent")' in str(agent.memory.steps)
 
-    def test_end_code_appending(self):
+    async def test_end_code_appending(self):
         # Checking original output message
-        orig_output = FakeCodeModelNoReturn().generate([])
+        orig_output = await FakeCodeModelNoReturn().generate([])
         assert not orig_output.content.endswith("<end_code>")
 
         # Checking the step output
-        agent = CodeAgent(
+        agent = AsyncCodeAgent(
             tools=[PythonInterpreterTool()],
             model=FakeCodeModelNoReturn(),
             max_steps=1,
         )
-        answer = agent.run("What is 2 multiplied by 3.6452?")
+        answer = await agent.run("What is 2 multiplied by 3.6452?")
         assert answer
 
         memory_steps = agent.memory.steps
@@ -1172,7 +1069,7 @@ class TestCodeAgent:
         assert messages
         assert all(m.content.endswith("<end_code>") for m in messages)
 
-    def test_change_tools_after_init(self):
+    async def test_change_tools_after_init(self):
         from smolagents import tool
 
         @tool
@@ -1185,194 +1082,45 @@ class TestCodeAgent:
             """Fake tool"""
             return "2"
 
-        class FakeCodeModel(Model):
-            def generate(self, messages, stop_sequences=None, grammar=None):
-                return ChatMessage(role="assistant", content="Code:\n```py\nfinal_answer(fake_tool_1())\n```")
+        class FakeCodeModel(AsyncModel):
+            async def generate(self, messages, stop_sequences=None, grammar=None, **kwargs):
+                yield ChatMessage(role="assistant", content="Code:\n```py\nfinal_answer(fake_tool_1())\n```")
 
-        agent = CodeAgent(tools=[fake_tool_1], model=FakeCodeModel())
+        agent = AsyncCodeAgent(tools=[fake_tool_1], model=FakeCodeModel())
 
         agent.tools["final_answer"] = CustomFinalAnswerTool()
         agent.tools["fake_tool_1"] = fake_tool_2
 
-        answer = agent.run("Fake task.")
+        answer = await agent.run("Fake task.")
         assert answer == "2CUSTOM"
 
-    def test_local_python_executor_with_custom_functions(self):
+    async def test_local_python_executor_with_custom_functions(self):
         model = MagicMock()
         model.last_input_token_count = 10
         model.last_output_token_count = 5
-        agent = CodeAgent(tools=[], model=model)
+        agent = AsyncCodeAgent(tools=[], model=model)
         agent.python_executor.additional_functions = {"open": open}
-        agent.run("Test run")
+        await agent.run("Test run")
         assert "open" in agent.python_executor.static_tools
 
-    @pytest.mark.parametrize("agent_dict_version", ["v1.9", "v1.10"])
-    def test_from_folder(self, agent_dict_version, get_agent_dict):
-        agent_dict = get_agent_dict(agent_dict_version)
-        with (
-            patch("smolagents.agents.Path") as mock_path,
-            patch("smolagents.models.InferenceClientModel") as mock_model,
-        ):
-            import json
-
-            mock_path.return_value.__truediv__.return_value.read_text.return_value = json.dumps(agent_dict)
-            mock_model.from_dict.return_value.model_id = "Qwen/Qwen2.5-Coder-32B-Instruct"
-            agent = CodeAgent.from_folder("ignored_dummy_folder")
-        assert isinstance(agent, CodeAgent)
-        assert agent.name == "test_agent"
-        assert agent.description == "dummy description"
-        assert agent.max_steps == 10
-        assert agent.planning_interval == 2
-        assert agent.grammar is None
-        assert agent.additional_authorized_imports == ["pandas"]
-        assert "pandas" in agent.authorized_imports
-        assert agent.executor_type == "local"
-        assert agent.executor_kwargs == {}
-        assert agent.max_print_outputs_length is None
-        assert agent.managed_agents == {}
-        assert set(agent.tools.keys()) == {"final_answer"}
-        assert agent.model == mock_model.from_dict.return_value
-        assert mock_model.from_dict.call_args.args[0]["model_id"] == "Qwen/Qwen2.5-Coder-32B-Instruct"
-        assert agent.model.model_id == "Qwen/Qwen2.5-Coder-32B-Instruct"
-        assert agent.logger.level == 2
-        assert agent.prompt_templates["system_prompt"] == "dummy system prompt"
-
-    def test_from_dict(self):
-        # Create a test agent dictionary
-        agent_dict = {
-            "model": {"class": "InferenceClientModel", "data": {"model_id": "Qwen/Qwen2.5-Coder-32B-Instruct"}},
-            "tools": [
-                {
-                    "name": "valid_tool_function",
-                    "code": 'from smolagents import Tool\nfrom typing import Any, Optional\n\nclass SimpleTool(Tool):\n    name = "valid_tool_function"\n    description = "A valid tool function."\n    inputs = {"input":{"type":"string","description":"Input string."}}\n    output_type = "string"\n\n    def forward(self, input: str) -> str:\n        """A valid tool function.\n\n        Args:\n            input (str): Input string.\n        """\n        return input.upper()',
-                    "requirements": {"smolagents"},
-                }
-            ],
-            "managed_agents": {},
-            "prompt_templates": EMPTY_PROMPT_TEMPLATES,
-            "max_steps": 15,
-            "verbosity_level": 2,
-            "grammar": None,
-            "planning_interval": 3,
-            "name": "test_code_agent",
-            "description": "Test code agent description",
-            "authorized_imports": ["pandas", "numpy"],
-            "executor_type": "local",
-            "executor_kwargs": {"max_workers": 2},
-            "max_print_outputs_length": 1000,
-        }
-
-        # Call from_dict
-        with patch("smolagents.models.InferenceClientModel") as mock_model_class:
-            mock_model_instance = mock_model_class.from_dict.return_value
-            agent = CodeAgent.from_dict(agent_dict)
-
-        # Verify the agent was created correctly with CodeAgent-specific parameters
-        assert agent.model == mock_model_instance
-        assert agent.additional_authorized_imports == ["pandas", "numpy"]
-        assert agent.executor_type == "local"
-        assert agent.executor_kwargs == {"max_workers": 2}
-        assert agent.max_print_outputs_length == 1000
-
-        # Test with missing optional parameters
-        minimal_agent_dict = {
-            "model": {"class": "InferenceClientModel", "data": {"model_id": "Qwen/Qwen2.5-Coder-32B-Instruct"}},
-            "tools": [],
-            "managed_agents": {},
-        }
-
-        with patch("smolagents.models.InferenceClientModel"):
-            agent = CodeAgent.from_dict(minimal_agent_dict)
-        # Verify defaults are used
-        assert agent.max_steps == 20  # default from MultiStepAgent.__init__
-
-        # Test overriding with kwargs
-        with patch("smolagents.models.InferenceClientModel"):
-            agent = CodeAgent.from_dict(
-                agent_dict, additional_authorized_imports=["matplotlib"], executor_kwargs={"max_workers": 4}
-            )
-        assert agent.additional_authorized_imports == ["matplotlib"]
-        assert agent.executor_kwargs == {"max_workers": 4}
 
 
 class TestMultiAgents:
-    def test_multiagents_save(self, tmp_path):
-        model = InferenceClientModel(model_id="Qwen/Qwen2.5-Coder-32B-Instruct", max_tokens=2096, temperature=0.5)
-
-        web_agent = ToolCallingAgent(
-            model=model,
-            tools=[DuckDuckGoSearchTool(max_results=2), VisitWebpageTool()],
-            name="web_agent",
-            description="does web searches",
-        )
-        code_agent = CodeAgent(model=model, tools=[], name="useless", description="does nothing in particular")
-
-        agent = CodeAgent(
-            model=model,
-            tools=[],
-            additional_authorized_imports=["pandas", "datetime"],
-            managed_agents=[web_agent, code_agent],
-            max_print_outputs_length=1000,
-            executor_type="local",
-            executor_kwargs={"max_workers": 2},
-        )
-        agent.save(tmp_path)
-
-        expected_structure = {
-            "managed_agents": {
-                "useless": {"tools": {"files": ["final_answer.py"]}, "files": ["agent.json", "prompts.yaml"]},
-                "web_agent": {
-                    "tools": {"files": ["final_answer.py", "visit_webpage.py", "web_search.py"]},
-                    "files": ["agent.json", "prompts.yaml"],
-                },
-            },
-            "tools": {"files": ["final_answer.py"]},
-            "files": ["app.py", "requirements.txt", "agent.json", "prompts.yaml"],
-        }
-
-        def verify_structure(current_path: Path, structure: dict):
-            for dir_name, contents in structure.items():
-                if dir_name != "files":
-                    # For directories, verify they exist and recurse into them
-                    dir_path = current_path / dir_name
-                    assert dir_path.exists(), f"Directory {dir_path} does not exist"
-                    assert dir_path.is_dir(), f"{dir_path} is not a directory"
-                    verify_structure(dir_path, contents)
-                else:
-                    # For files, verify each exists in the current path
-                    for file_name in contents:
-                        file_path = current_path / file_name
-                        assert file_path.exists(), f"File {file_path} does not exist"
-                        assert file_path.is_file(), f"{file_path} is not a file"
-
-        verify_structure(tmp_path, expected_structure)
-
-        # Test that re-loaded agents work as expected.
-        agent2 = CodeAgent.from_folder(tmp_path, planning_interval=5)
-        assert agent2.planning_interval == 5  # Check that kwargs are used
-        assert set(agent2.authorized_imports) == set(["pandas", "datetime"] + BASE_BUILTIN_MODULES)
-        assert agent2.max_print_outputs_length == 1000
-        assert agent2.executor_type == "local"
-        assert agent2.executor_kwargs == {"max_workers": 2}
-        assert (
-            agent2.managed_agents["web_agent"].tools["web_search"].max_results == 10
-        )  # For now tool init parameters are forgotten
-        assert agent2.model.kwargs["temperature"] == pytest.approx(0.5)
-
-    def test_multiagents(self):
-        class FakeModelMultiagentsManagerAgent(Model):
+    async def test_multiagents(self):
+        class FakeModelMultiagentsManagerAgent(AsyncModel):
             model_id = "fake_model"
 
-            def generate(
+            async def generate(
                 self,
                 messages,
                 stop_sequences=None,
                 grammar=None,
                 tools_to_call_from=None,
+                **kwargs,
             ):
                 if tools_to_call_from is not None:
                     if len(messages) < 3:
-                        return ChatMessage(
+                        yield ChatMessage(
                             role="assistant",
                             content="",
                             tool_calls=[
@@ -1388,7 +1136,7 @@ class TestMultiAgents:
                         )
                     else:
                         assert "Report on the current US president" in str(messages)
-                        return ChatMessage(
+                        yield ChatMessage(
                             role="assistant",
                             content="",
                             tool_calls=[
@@ -1403,7 +1151,7 @@ class TestMultiAgents:
                         )
                 else:
                     if len(messages) < 3:
-                        return ChatMessage(
+                        yield ChatMessage(
                             role="assistant",
                             content="""
 Thought: Let's call our search agent.
@@ -1415,7 +1163,7 @@ result = search_agent("Who is the current US president?")
                         )
                     else:
                         assert "Report on the current US president" in str(messages)
-                        return ChatMessage(
+                        yield ChatMessage(
                             role="assistant",
                             content="""
 Thought: Let's return the report.
@@ -1428,17 +1176,18 @@ final_answer("Final report.")
 
         manager_model = FakeModelMultiagentsManagerAgent()
 
-        class FakeModelMultiagentsManagedAgent(Model):
+        class FakeModelMultiagentsManagedAgent(AsyncModel):
             model_id = "fake_model"
 
-            def generate(
+            async def generate(
                 self,
                 messages,
                 tools_to_call_from=None,
                 stop_sequences=None,
                 grammar=None,
+                **kwargs,
             ):
-                return ChatMessage(
+                yield ChatMessage(
                     role="assistant",
                     content="Here is the secret content: FLAG1",
                     tool_calls=[
@@ -1455,7 +1204,7 @@ final_answer("Final report.")
 
         managed_model = FakeModelMultiagentsManagedAgent()
 
-        web_agent = ToolCallingAgent(
+        web_agent = AsyncToolCallingAgent(
             tools=[],
             model=managed_model,
             max_steps=10,
@@ -1464,24 +1213,24 @@ final_answer("Final report.")
             verbosity_level=2,
         )
 
-        manager_code_agent = CodeAgent(
+        manager_code_agent = AsyncCodeAgent(
             tools=[],
             model=manager_model,
             managed_agents=[web_agent],
             additional_authorized_imports=["time", "numpy", "pandas"],
         )
 
-        report = manager_code_agent.run("Fake question.")
+        report = await manager_code_agent.run("Fake question.")
         assert report == "Final report."
 
-        manager_toolcalling_agent = ToolCallingAgent(
+        manager_toolcalling_agent = AsyncToolCallingAgent(
             tools=[],
             model=manager_model,
             managed_agents=[web_agent],
         )
 
         with web_agent.logger.console.capture() as capture:
-            report = manager_toolcalling_agent.run("Fake question.")
+            report = await manager_toolcalling_agent.run("Fake question.")
         assert report == "Final report."
         assert "FLAG1" in capture.get()  # Check that managed agent's output is properly logged
 
@@ -1514,7 +1263,8 @@ def prompt_templates():
         [1, 2, 3],
     ],
 )
-def test_tool_calling_agents_raises_tool_call_error_being_invoked_with_wrong_arguments(arguments):
+
+async def test_tool_calling_agents_raises_tool_call_error_being_invoked_with_wrong_arguments(arguments):
     @tool
     def _sample_tool(prompt: str) -> str:
         """Tool that returns same string
@@ -1527,12 +1277,12 @@ def test_tool_calling_agents_raises_tool_call_error_being_invoked_with_wrong_arg
 
         return prompt
 
-    agent = ToolCallingAgent(model=FakeToolCallModel(), tools=[_sample_tool])
+    agent = AsyncToolCallingAgent(model=FakeToolCallModel(), tools=[_sample_tool])
     with pytest.raises(AgentToolCallError):
         agent.execute_tool_call(_sample_tool.name, arguments)
 
 
-def test_tool_calling_agents_raises_agent_execution_error_when_tool_raises():
+async def test_tool_calling_agents_raises_agent_execution_error_when_tool_raises():
     @tool
     def _sample_tool(_: str) -> float:
         """Tool that fails
@@ -1545,6 +1295,6 @@ def test_tool_calling_agents_raises_agent_execution_error_when_tool_raises():
 
         return 1 / 0
 
-    agent = ToolCallingAgent(model=FakeToolCallModel(), tools=[_sample_tool])
+    agent = AsyncToolCallingAgent(model=FakeToolCallModel(), tools=[_sample_tool])
     with pytest.raises(AgentExecutionError):
         agent.execute_tool_call(_sample_tool.name, "sample")

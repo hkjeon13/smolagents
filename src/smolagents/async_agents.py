@@ -808,7 +808,7 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
                 memory_step.model_output_message = chat_message
                 model_output = chat_message.content
             else:
-                chat_message: ChatMessage = self.model.generate(
+                chat_message: ChatMessage = await self.model.generate(
                     input_messages,
                     stop_sequences=["<end_code>", "Observation:", "Calling tools:"],
                     **additional_args,
