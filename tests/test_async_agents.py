@@ -49,6 +49,7 @@ from smolagents.models import (
 )
 
 from smolagents.monitoring import AgentLogger, LogLevel
+from smolagents.async_monitoring import AsyncAgentLogger
 from smolagents.tools import Tool, tool
 from smolagents.utils import BASE_BUILTIN_MODULES, AgentExecutionError, AgentGenerationError, AgentToolCallError
 
@@ -60,7 +61,7 @@ def get_new_path(suffix="") -> str:
 
 @pytest.fixture
 def agent_logger():
-    return AgentLogger(
+    return AsyncAgentLogger(
         LogLevel.DEBUG, console=Console(record=True, no_color=True, force_terminal=False, file=io.StringIO())
     )
 

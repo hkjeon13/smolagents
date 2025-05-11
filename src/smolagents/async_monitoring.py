@@ -69,12 +69,12 @@ class AsyncMonitor:
 
 
 class AsyncAgentLogger:
-    def __init__(self, level: LogLevel = LogLevel.INFO):
+    def __init__(self, level: LogLevel = LogLevel.INFO, console: Console | None = None):
         self.level = level
-        self.console = Console()
-        self.log_queue = asyncio.Queue()
-        # 백그라운드로 로그를 출력하는 작업을 시작합니다.
-        self.worker_task = asyncio.create_task(self._log_worker())
+        if console is None:
+            self.console = Console()
+        else:
+            self.console = console
 
     async def _log_worker(self):
         while True:
@@ -91,7 +91,7 @@ class AsyncAgentLogger:
         if isinstance(level, str):
             level = LogLevel[level.upper()]
         if level <= self.level:
-            await self.log_queue.put((args, kwargs))
+            self.console.print(*args, **kwargs)
 
     async def log_error(self, error_message: str) -> None:
         await self.log(escape_code_brackets(error_message), style="bold red", level=LogLevel.ERROR)
@@ -116,7 +116,7 @@ class AsyncAgentLogger:
         else:
             await self.log(markdown_content, level=level)
 
-    async def log_code(self, title: str, content: str, level: int = LogLevel.INFO) -> None:
+    async def log_code(self, title: str, content: str, level: LogLevel = LogLevel.INFO) -> None:
         await self.log(
             Panel(
                 Syntax(
@@ -132,7 +132,7 @@ class AsyncAgentLogger:
             level=level,
         )
 
-    async def log_rule(self, title: str, level: int = LogLevel.INFO) -> None:
+    async def log_rule(self, title: str, level: LogLevel = LogLevel.INFO) -> None:
         await self.log(
             Rule(
                 "[bold]" + title,
@@ -143,7 +143,7 @@ class AsyncAgentLogger:
         )
 
     async def log_task(
-            self, content: str, subtitle: str, title: Optional[str] = None, level: int = LogLevel.INFO
+            self, content: str, subtitle: str, title: Optional[str] = None,  level: LogLevel = LogLevel.DEBUG
     ) -> None:
         await self.log(
             Panel(
