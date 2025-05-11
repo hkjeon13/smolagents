@@ -686,8 +686,10 @@ class TestMultiStepAgent:
             model=fake_model,
         )
         task = "Test task"
+        planning_step = None
+        async for result in agent._generate_planning_step(task, is_first_step=(step == 1), step=step):
+            planning_step = result
 
-        planning_step = list(agent._generate_planning_step(task, is_first_step=(step == 1), step=step))[-1]
         expected_message_texts = {
             "INITIAL_PLAN_USER_PROMPT": populate_template(
                 agent.prompt_templates["planning"]["initial_plan"],
@@ -786,7 +788,7 @@ class TestMultiStepAgent:
             model=fake_model,
         )
         task = "Test task"
-        final_answer = agent.provide_final_answer(task, images=images)
+        final_answer = await agent.provide_final_answer(task, images=images)
         expected_message_texts = {
             "FINAL_ANSWER_SYSTEM_PROMPT": agent.prompt_templates["final_answer"]["pre_messages"],
             "FINAL_ANSWER_USER_PROMPT": populate_template(
