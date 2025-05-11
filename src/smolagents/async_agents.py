@@ -142,6 +142,12 @@ class AsyncMultiStepAgentBase:
         """
         raise NotImplementedError
 
+    async def execute_tool_call(self, tool_name: str, arguments: dict[str, str] | str) -> Any:
+        """
+        Execute a tool or managed agent with the provided arguments.
+        """
+        raise NotImplementedError
+
 
 class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
     def __init__(
@@ -282,7 +288,8 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
                 step_number=self.step_number, start_time=step_start_time, observations_images=images
             )
             try:
-                async for el in self._execute_step(action_step):
+                steps = await self._execute_step(action_step)
+                async for el in steps:
                     yield el
                 final_answer = el
             except AgentGenerationError as e:
@@ -633,7 +640,7 @@ class AsyncToolCallingAgent(AsyncMultiStepAgent):
             }
         return arguments
 
-    def execute_tool_call(self, tool_name: str, arguments: dict[str, str] | str) -> Any:
+    async def execute_tool_call(self, tool_name: str, arguments: dict[str, str] | str) -> Any:
         """
         Execute a tool or managed agent with the provided arguments.
 
@@ -658,9 +665,18 @@ class AsyncToolCallingAgent(AsyncMultiStepAgent):
         try:
             # Call tool with appropriate arguments
             if isinstance(arguments, dict):
-                return tool(**arguments) if is_managed_agent else tool(**arguments, sanitize_inputs_outputs=True)
+                if is_managed_agent:
+                    return await tool(**arguments)
+                else:
+                    return tool(**arguments, sanitize_inputs_outputs=True)
             elif isinstance(arguments, str):
-                return tool(arguments) if is_managed_agent else tool(arguments, sanitize_inputs_outputs=True)
+                if is_managed_agent:
+                    return await tool(arguments)
+                else:
+                    # If the tool is not a managed agent, we need to sanitize the inputs and outputs
+                    # before passing them to the tool.
+                    # This is because the tool may not be able to handle raw strings.
+                    return tool(arguments, sanitize_inputs_outputs=True)
             else:
                 raise TypeError(f"Unsupported arguments type: {type(arguments)}")
 
