@@ -19,7 +19,7 @@ import uuid
 from collections.abc import Generator
 from contextlib import nullcontext as does_not_raise
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from huggingface_hub import (
@@ -191,7 +191,7 @@ class FakeCodeModelError(AsyncModel):
     async def generate(self, messages, stop_sequences=None):
         prompt = str(messages)
         if "special_marker" not in prompt:
-            yield ChatMessage(
+            return ChatMessage(
                 role="assistant",
                 content="""
 Thought: I should multiply 2 by 3.6452. special_marker
@@ -206,7 +206,7 @@ error_function()
 """,
             )
         else:  # We're at step 2
-            yield ChatMessage(
+            return ChatMessage(
                 role="assistant",
                 content="""
 Thought: I faced an error in the previous step.
@@ -222,7 +222,7 @@ class FakeCodeModelSyntaxError(AsyncModel):
     async def generate(self, messages, stop_sequences=None):
         prompt = str(messages)
         if "special_marker" not in prompt:
-            yield ChatMessage(
+            return ChatMessage(
                 role="assistant",
                 content="""
 Thought: I should multiply 2 by 3.6452. special_marker
@@ -236,7 +236,7 @@ print("Ok, calculation done!")
 """,
             )
         else:  # We're at step 2
-            yield ChatMessage(
+            return ChatMessage(
                 role="assistant",
                 content="""
 Thought: I can now answer the initial question
@@ -250,7 +250,7 @@ final_answer("got an error")
 
 class FakeCodeModelImport(AsyncModel):
     async def generate(self, messages, stop_sequences=None):
-        yield ChatMessage(
+        return ChatMessage(
             role="assistant",
             content="""
 Thought: I can answer the question
@@ -596,12 +596,12 @@ class DummyMultiStepAgent(AsyncMultiStepAgent):
 
 class TestMultiStepAgent:
     async def test_instantiation_disables_logging_to_terminal(self):
-        fake_model = MagicMock()
+        fake_model = AsyncMock()
         agent = DummyMultiStepAgent(tools=[], model=fake_model)
         assert agent.logger.level == -1, "logging to terminal should be disabled for testing using a fixture"
 
     async def test_instantiation_with_prompt_templates(self, prompt_templates):
-        agent = DummyMultiStepAgent(tools=[], model=MagicMock(), prompt_templates=prompt_templates)
+        agent = DummyMultiStepAgent(tools=[], model=AsyncMock(), prompt_templates=prompt_templates)
         assert agent.prompt_templates == prompt_templates
         assert agent.prompt_templates["system_prompt"] == "This is a test system prompt."
         assert "managed_agent" in agent.prompt_templates
@@ -613,7 +613,7 @@ class TestMultiStepAgent:
         [([], FinalAnswerTool), ([CustomFinalAnswerTool()], CustomFinalAnswerTool)],
     )
     async def test_instantiation_with_final_answer_tool(self, tools, expected_final_answer_tool):
-        agent = DummyMultiStepAgent(tools=tools, model=MagicMock())
+        agent = DummyMultiStepAgent(tools=tools, model=AsyncMock())
         assert "final_answer" in agent.tools
         assert isinstance(agent.tools["final_answer"], expected_final_answer_tool)
 
@@ -645,7 +645,7 @@ class TestMultiStepAgent:
         assert "don't" in capture.get() and "want" in capture.get()
 
     async def test_step_number(self):
-        fake_model = MagicMock()
+        fake_model = AsyncMock()
         fake_model.last_input_token_count = 10
         fake_model.last_output_token_count = 20
         max_steps = 2
@@ -680,7 +680,7 @@ class TestMultiStepAgent:
         ],
     )
     async def test_planning_step(self, step, expected_messages_list):
-        fake_model = MagicMock()
+        fake_model = AsyncMock()
         agent = AsyncCodeAgent(
             tools=[],
             model=fake_model,
@@ -779,7 +779,7 @@ class TestMultiStepAgent:
         ],
     )
     async def test_provide_final_answer(self, images, expected_messages_list):
-        fake_model = MagicMock()
+        fake_model = AsyncMock()
         fake_model.return_value.content = "Final answer."
         agent = AsyncCodeAgent(
             tools=[],
@@ -818,7 +818,7 @@ class TestMultiStepAgent:
                     assert content == expected_content
 
     async def test_interrupt(self):
-        fake_model = MagicMock()
+        fake_model = AsyncMock()
         fake_model.return_value.content = "Model output."
         fake_model.last_input_token_count = None
 
@@ -870,7 +870,7 @@ class TestMultiStepAgent:
         ],
     )
     async def test_validate_tools_and_managed_agents(self, tools, managed_agents, name, expectation):
-        fake_model = MagicMock()
+        fake_model = AsyncMock()
         with expectation:
             DummyMultiStepAgent(
                 tools=tools,
@@ -988,12 +988,12 @@ class TestToolCallingAgent:
 class TestCodeAgent:
     @pytest.mark.parametrize("provide_run_summary", [False, True])
     async def test_call_with_provide_run_summary(self, provide_run_summary):
-        agent = AsyncCodeAgent(tools=[], model=MagicMock(), provide_run_summary=provide_run_summary)
+        agent = AsyncCodeAgent(tools=[], model=AsyncMock(), provide_run_summary=provide_run_summary)
         assert agent.provide_run_summary is provide_run_summary
         agent.managed_agent_prompt = "Task: {task}"
         agent.name = "test_agent"
-        agent.run = MagicMock(return_value="Test output")
-        agent.write_memory_to_messages = MagicMock(return_value=[{"content": "Test summary"}])
+        agent.run = AsyncMock(return_value="Test output")
+        agent.write_memory_to_messages = AsyncMock(return_value=[{"content": "Test summary"}])
 
         result = agent("Test request")
         expected_summary = "Here is the final answer from your managed agent 'test_agent':\nTest output"
@@ -1095,7 +1095,7 @@ class TestCodeAgent:
         assert answer == "2CUSTOM"
 
     async def test_local_python_executor_with_custom_functions(self):
-        model = MagicMock()
+        model = AsyncMock()
         model.last_input_token_count = 10
         model.last_output_token_count = 5
         agent = AsyncCodeAgent(tools=[], model=model)

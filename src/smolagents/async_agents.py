@@ -823,6 +823,8 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
 
             # This adds <end_code> sequence to the history.
             # This will nudge ulterior LLM calls to finish with <end_code>, thus efficiently stopping generation.
+            print("### Model output:", model_output)
+
             if model_output and model_output.strip().endswith("```"):
                 model_output += "<end_code>"
                 memory_step.model_output_message.content = model_output
