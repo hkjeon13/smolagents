@@ -31,7 +31,8 @@ class AsyncModel(Model):
         Returns:
             ChatMessage: The generated response.
         """
-        raise NotImplementedError("generate method not implemented")
+        yield "Not implemented yet"
+
     async def __call__(self, *args, **kwargs):
         return self.generate(*args, **kwargs)
 

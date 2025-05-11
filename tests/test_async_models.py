@@ -22,16 +22,18 @@ import pytest
 from huggingface_hub import ChatCompletionOutputMessage
 
 from smolagents.models import (
-    AsyncModel,
-    AsyncAzureOpenAIServerModel,
     ChatMessage,
     ChatMessageToolCall,
-    AsyncOpenAIServerModel,
     get_clean_message_list,
     get_tool_call_from_text,
     get_tool_json_schema,
     parse_json_if_needed,
     supports_stop_parameter,
+)
+from smolagents.async_models import (
+    AsyncAzureOpenAIServerModel,
+    AsyncOpenAIServerModel,
+    AsyncModel
 )
 from smolagents.tools import tool
 
@@ -112,7 +114,7 @@ class TestAsyncOpenAIServerModel:
         project = "test_project"
         client_kwargs = {"max_retries": 5}
 
-        with patch("openai.OpenAI") as MockOpenAI:
+        with patch("openai.AsyncOpenAI") as MockOpenAI:
             model = AsyncOpenAIServerModel(
                 model_id=model_id,
                 api_base=api_base,
@@ -138,7 +140,7 @@ class TestAsyncAzureOpenAIServerModel:
         project = "test_project"
         client_kwargs = {"max_retries": 5}
 
-        with patch("openai.OpenAI") as MockOpenAI, patch("openai.AzureOpenAI") as MockAzureOpenAI:
+        with patch("openai.AsyncOpenAI") as MockOpenAI, patch("openai.AsyncAzureOpenAI") as MockAzureOpenAI:
             model = AsyncAzureOpenAIServerModel(
                 model_id=model_id,
                 api_key=api_key,
