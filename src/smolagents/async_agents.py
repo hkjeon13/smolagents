@@ -813,6 +813,7 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
                     stop_sequences=["<end_code>", "Observation:", "Calling tools:"],
                     **additional_args,
                 )
+                print("### Model ChatMessage:", chat_message, type(chat_message))
                 memory_step.model_output_message = chat_message
                 model_output = chat_message.content
                 self.logger.log_markdown(
@@ -823,7 +824,7 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
 
             # This adds <end_code> sequence to the history.
             # This will nudge ulterior LLM calls to finish with <end_code>, thus efficiently stopping generation.
-            print("### Model output:", model_output)
+            print("### Model output:", model_output, type(model_output))
 
             if model_output and model_output.strip().endswith("```"):
                 model_output += "<end_code>"
