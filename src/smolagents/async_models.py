@@ -34,7 +34,7 @@ class AsyncModel(Model):
         raise NotImplementedError("Subclasses must implement this method")
 
     async def __call__(self, *args, **kwargs):
-        return self.generate(*args, **kwargs)
+        return await self.generate(*args, **kwargs)
 
     async def generate_stream(
         self,
