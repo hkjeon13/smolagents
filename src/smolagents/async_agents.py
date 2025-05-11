@@ -407,7 +407,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
                     plan_message_content += completion_delta.content
                     yield completion_delta
             else:
-                plan_message_content = self.model.generate(input_messages, stop_sequences=["<end_plan>"]).content
+                plan_message_content = await self.model.generate(input_messages, stop_sequences=["<end_plan>"]).content
 
             plan = textwrap.dedent(
                 f"""I still need to solve the task I was given:\n```\n{self.task}\n```\n\nHere are the facts I know and my new/updated plan of action to solve the task:\n```\n{plan_message_content}\n```"""
