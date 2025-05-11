@@ -373,7 +373,8 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
                     yield completion_delta
             else:
                 # TODO: Make sure the model is AsyncModel
-                plan_message_content = await self.model.generate(input_messages, stop_sequences=["<end_plan>"]).content
+                plan_message_content = await self.model.generate(input_messages, stop_sequences=["<end_plan>"])
+                plan_message_content = plan_message_content.content
             plan = textwrap.dedent(
                 f"""Here are the facts I know and the plan of action that I will follow to solve the task:\n```\n{plan_message_content}\n```"""
             )
@@ -416,7 +417,8 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
                     plan_message_content += completion_delta.content
                     yield completion_delta
             else:
-                plan_message_content = await self.model.generate(input_messages, stop_sequences=["<end_plan>"]).content
+                plan_message_content = await self.model.generate(input_messages, stop_sequences=["<end_plan>"])
+                plan_message_content = plan_message_content.content
 
             plan = textwrap.dedent(
                 f"""I still need to solve the task I was given:\n```\n{self.task}\n```\n\nHere are the facts I know and my new/updated plan of action to solve the task:\n```\n{plan_message_content}\n```"""
