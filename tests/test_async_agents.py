@@ -16,7 +16,7 @@ import io
 import os
 import tempfile
 import uuid
-from collections.abc import Generator
+from collections.abc import Generator, AsyncGenerator
 from contextlib import nullcontext as does_not_raise
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
@@ -587,7 +587,7 @@ class MockAgent:
 
 
 class DummyMultiStepAgent(AsyncMultiStepAgent):
-    def step(self, memory_step: ActionStep) -> Generator[None]:
+    async def step(self, memory_step: ActionStep) -> AsyncGenerator[None]:
         yield None
 
     def initialize_system_prompt(self):

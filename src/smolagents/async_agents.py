@@ -298,7 +298,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
                 self.step_number += 1
 
         if final_answer is None and self.step_number == max_steps + 1:
-            final_answer = self._handle_max_steps_reached(task, images, step_start_time)
+            final_answer = await self._handle_max_steps_reached(task, images, step_start_time)
             yield action_step
         yield FinalAnswerStep(handle_agent_output_types(final_answer))
 
