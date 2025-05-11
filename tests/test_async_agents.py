@@ -68,7 +68,7 @@ def agent_logger():
 class FakeToolCallModel(AsyncModel):
     async def generate(self, messages, tools_to_call_from=None, stop_sequences=None, grammar=None, **kwargs):
         if len(messages) < 3:
-            yield ChatMessage(
+            return ChatMessage(
                 role="assistant",
                 content="",
                 tool_calls=[
@@ -82,7 +82,7 @@ class FakeToolCallModel(AsyncModel):
                 ],
             )
         else:
-            yield ChatMessage(
+            return ChatMessage(
                 role="assistant",
                 content="",
                 tool_calls=[
@@ -98,7 +98,7 @@ class FakeToolCallModel(AsyncModel):
 class FakeToolCallModelImage(AsyncModel):
     async def generate(self, messages, tools_to_call_from=None, stop_sequences=None, grammar=None, **kwargs):
         if len(messages) < 3:
-            yield ChatMessage(
+            return ChatMessage(
                 role="assistant",
                 content="",
                 tool_calls=[
@@ -113,7 +113,7 @@ class FakeToolCallModelImage(AsyncModel):
                 ],
             )
         else:
-            yield ChatMessage(
+            return ChatMessage(
                 role="assistant",
                 content="",
                 tool_calls=[
@@ -129,7 +129,7 @@ class FakeToolCallModelImage(AsyncModel):
 class FakeToolCallModelVL(AsyncModel):
     async def generate(self, messages, tools_to_call_from=None, stop_sequences=None, grammar=None, **kwargs):
         if len(messages) < 3:
-            yield ChatMessage(
+            return ChatMessage(
                 role="assistant",
                 content="",
                 tool_calls=[
@@ -147,7 +147,7 @@ class FakeToolCallModelVL(AsyncModel):
                 ],
             )
         else:
-            yield ChatMessage(
+            return ChatMessage(
                 role="assistant",
                 content="",
                 tool_calls=[
@@ -164,7 +164,7 @@ class FakeCodeModel(AsyncModel):
     async def generate(self, messages, stop_sequences=None, grammar=None, **kwargs):
         prompt = str(messages)
         if "special_marker" not in prompt:
-            yield ChatMessage(
+            return ChatMessage(
                 role="assistant",
                 content="""
 Thought: I should multiply 2 by 3.6452. special_marker
@@ -175,7 +175,7 @@ result = 2**3.6452
 """,
             )
         else:  # We're at step 2
-            yield ChatMessage(
+            return ChatMessage(
                 role="assistant",
                 content="""
 Thought: I can now answer the initial question
