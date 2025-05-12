@@ -49,7 +49,6 @@ from smolagents.models import (
 )
 
 from smolagents.monitoring import AgentLogger, LogLevel
-from smolagents.async_monitoring import AsyncAgentLogger
 from smolagents.tools import Tool, tool
 from smolagents.utils import BASE_BUILTIN_MODULES, AgentExecutionError, AgentGenerationError, AgentToolCallError
 
@@ -61,7 +60,7 @@ def get_new_path(suffix="") -> str:
 
 @pytest.fixture
 def agent_logger():
-    return AsyncAgentLogger(
+    return AgentLogger(
         LogLevel.DEBUG, console=Console(record=True, no_color=True, force_terminal=False, file=io.StringIO())
     )
 
@@ -820,7 +819,7 @@ class TestMultiStepAgent:
         fake_model.return_value.content = "Model output."
         fake_model.last_input_token_count = None
 
-        def interrupt_callback(memory_step, agent):
+        async def interrupt_callback(memory_step, agent):
             agent.interrupt()
 
         agent = AsyncCodeAgent(

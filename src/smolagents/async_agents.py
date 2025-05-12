@@ -867,8 +867,11 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
 
             # This adds <end_code> sequence to the history.
             # This will nudge ulterior LLM calls to finish with <end_code>, thus efficiently stopping generation.
+            model_output = model_output.strip()
+            if iscoroutine(model_output):
+                model_output = await model_output
 
-            if model_output and model_output.strip().endswith("```"):
+            if model_output and model_output.endswith("```"):
                 model_output += "<end_code>"
                 memory_step.model_output_message.content = model_output
 
