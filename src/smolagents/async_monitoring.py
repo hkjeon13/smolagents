@@ -29,6 +29,7 @@ class LogLevel(IntEnum):
     DEBUG = 2  # Detailed output
 
 
+
 class AsyncMonitor:
     def __init__(self, tracked_model, logger):
         self.step_durations = []
