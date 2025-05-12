@@ -575,7 +575,10 @@ class AsyncToolCallingAgent(AsyncMultiStepAgent):
                 tools_to_call_from=list(self.tools.values()),
             )
             memory_step.model_output_message = chat_message
-            model_output = chat_message.content if not iscoroutine(chat_message.content) else await chat_message.content
+            if iscoroutine(chat_message.content):
+                model_output = await chat_message.content
+            else:
+                model_output = chat_message.content
 
             await self.logger.log_markdown(
                 content=model_output if model_output else str(chat_message.raw),
@@ -852,7 +855,10 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
                     **additional_args,
                 )
                 memory_step.model_output_message = chat_message
-                model_output = chat_message.content if not iscoroutine(chat_message.content) else await chat_message.content
+                if iscoroutine(chat_message.content):
+                    model_output = await chat_message.content
+                else:
+                    model_output = chat_message.content
                 await self.logger.log_markdown(
                     content=model_output,
                     title="Output message of the LLM:",
