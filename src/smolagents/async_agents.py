@@ -210,6 +210,18 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
         self.step_callbacks.append(self.monitor.update_metrics)
         self.stream_outputs = False
 
+    def _setup_tools(self, tools, add_base_tools):
+        assert all(isinstance(tool, Tool) for tool in tools), "All elements must be instance of Tool (or a subclass)"
+        self.tools = {tool.name: tool for tool in tools}
+        if add_base_tools:
+            self.tools.update(
+                {
+                    name: cls()
+                    for name, cls in TOOL_MAPPING.items()
+                    if name != "python_interpreter" or self.__class__.__name__ == "AsyncToolCallingAgent"
+                }
+            )
+        self.tools.setdefault("final_answer", FinalAnswerTool())
 
     async def run(
         self,
