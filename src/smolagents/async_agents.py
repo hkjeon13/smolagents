@@ -238,12 +238,13 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
             self.memory.reset()
             self.monitor.reset()
 
-        self.logger.log_task(
+        await self.logger.log_task(
             content=self.task.strip(),
             subtitle=f"{type(self.model).__name__} - {(self.model.model_id if hasattr(self.model, 'model_id') else '')}",
             level=LogLevel.INFO,
             title=self.name if hasattr(self, "name") else None,
         )
+
         self.memory.steps.append(TaskStep(task=self.task, task_images=images))
 
         if getattr(self, "python_executor", None):
@@ -311,7 +312,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
 
 
     async def _execute_step(self, memory_step: ActionStep) -> AsyncGenerator[Any]:
-        self.logger.log_rule(f"Step {self.step_number}", level=LogLevel.INFO)
+        await self.logger.log_rule(f"Step {self.step_number}", level=LogLevel.INFO)
         final_answer = None
         async for el in self._step_stream(memory_step):
             final_answer = el
@@ -541,7 +542,7 @@ class AsyncToolCallingAgent(AsyncMultiStepAgent):
         )
         return system_prompt
 
-    async def _step_stream(self, memory_step: ActionStep) -> Generator[Any]:
+    async def _step_stream(self, memory_step: ActionStep) -> AsyncGenerator[Any]:
         """
         Perform one step in the ReAct framework: the agent thinks, acts, and observes the result.
         Yields either None if the step is not final, or the final answer.
@@ -608,7 +609,7 @@ class AsyncToolCallingAgent(AsyncMultiStepAgent):
                     level=LogLevel.INFO,
                 )
             else:
-                final_answer = self.execute_tool_call("final_answer", {"answer": answer})
+                final_answer = await self.execute_tool_call("final_answer", {"answer": answer})
                 await self.logger.log(
                     Text(f"Final answer: {final_answer}", style=f"bold {YELLOW_HEX}"),
                     level=LogLevel.INFO,
@@ -619,7 +620,7 @@ class AsyncToolCallingAgent(AsyncMultiStepAgent):
         else:
             if tool_arguments is None:
                 tool_arguments = {}
-            observation = self.execute_tool_call(tool_name, tool_arguments)
+            observation = await self.execute_tool_call(tool_name, tool_arguments)
             observation_type = type(observation)
             if observation_type in [AgentImage, AgentAudio]:
                 if observation_type == AgentImage:
