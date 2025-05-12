@@ -531,23 +531,48 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
 
 class AsyncToolCallingAgent(AsyncMultiStepAgent):
     def __init__(
-        self,
-        tools: list[Tool],
-        model: Callable[[list[dict[str, str]]], ChatMessage],
-        prompt_templates: PromptTemplates | None = None,
-        planning_interval: int | None = None,
-        **kwargs,
+            self,
+            tools: list[Tool],
+            model: AsyncModel,
+            prompt_templates: PromptTemplates | None = None,
+            grammar: dict[str, str] | None = None,
+            additional_authorized_imports: list[str] | None = None,
+            planning_interval: int | None = None,
+            executor_type: str | None = "local",
+            executor_kwargs: dict[str, Any] | None = None,
+            max_print_outputs_length: int | None = None,
+            stream_outputs: bool = False,
+            **kwargs,
     ):
+        self.additional_authorized_imports = additional_authorized_imports if additional_authorized_imports else []
+        self.authorized_imports = sorted(set(BASE_BUILTIN_MODULES) | set(self.additional_authorized_imports))
+        self.max_print_outputs_length = max_print_outputs_length
         prompt_templates = prompt_templates or yaml.safe_load(
-            importlib.resources.files("smolagents.prompts").joinpath("toolcalling_agent.yaml").read_text()
+            importlib.resources.files("smolagents.prompts").joinpath("code_agent.yaml").read_text()
         )
         super().__init__(
             tools=tools,
-            model=model, # type: ignore
+            model=model,
             prompt_templates=prompt_templates,
+            grammar=grammar,
             planning_interval=planning_interval,
             **kwargs,
         )
+
+        self.stream_outputs = stream_outputs
+        if self.stream_outputs and not hasattr(self.model, "generate_stream"):
+            raise ValueError(
+                "`stream_outputs` is set to True, but the model class implements no `generate_stream` method."
+            )
+        if "*" in self.additional_authorized_imports:
+            self.logger.log(
+                "Caution: you set an authorization for all imports, meaning your agent can decide to import any package it deems necessary. This might raise issues if the package is not installed in your environment.",
+                level=LogLevel.INFO,
+            )
+        self.executor_type = executor_type or "local"
+        self.executor_kwargs = executor_kwargs or {}
+        self.python_executor = self.create_python_executor()
+
 
     def initialize_system_prompt(self) -> str:
         system_prompt = populate_template(

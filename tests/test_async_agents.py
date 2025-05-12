@@ -19,7 +19,7 @@ import uuid
 from collections.abc import Generator, AsyncGenerator
 from contextlib import nullcontext as does_not_raise
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, patch, MagicMock
 
 import pytest
 from huggingface_hub import (
@@ -989,8 +989,8 @@ class TestCodeAgent:
         assert agent.provide_run_summary is provide_run_summary
         agent.managed_agent_prompt = "Task: {task}"
         agent.name = "test_agent"
-        agent.run = AsyncMock(return_value="Test output")
-        agent.write_memory_to_messages = AsyncMock(return_value=[{"content": "Test summary"}])
+        agent.run = MagicMock(return_value="Test output")
+        agent.write_memory_to_messages = MagicMock(return_value=[{"content": "Test summary"}])
 
         result = await agent("Test request")
         expected_summary = "Here is the final answer from your managed agent 'test_agent':\nTest output"
@@ -1276,7 +1276,7 @@ async def test_tool_calling_agents_raises_tool_call_error_being_invoked_with_wro
 
     agent = AsyncToolCallingAgent(model=FakeToolCallModel(), tools=[_sample_tool])
     with pytest.raises(AgentToolCallError):
-        agent.execute_tool_call(_sample_tool.name, arguments)
+        await agent.execute_tool_call(_sample_tool.name, arguments)
 
 
 async def test_tool_calling_agents_raises_agent_execution_error_when_tool_raises():
@@ -1294,4 +1294,4 @@ async def test_tool_calling_agents_raises_agent_execution_error_when_tool_raises
 
     agent = AsyncToolCallingAgent(model=FakeToolCallModel(), tools=[_sample_tool])
     with pytest.raises(AgentExecutionError):
-        agent.execute_tool_call(_sample_tool.name, "sample")
+        await agent.execute_tool_call(_sample_tool.name, "sample")
