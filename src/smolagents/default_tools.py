@@ -84,7 +84,7 @@ class FinalAnswerTool(Tool):
     output_type = "any"
 
     def forward(self, answer: Any) -> Any:
-        return repr(textwrap.dedent(answer))
+        return textwrap.dedent(answer)
 
 class UserInputTool(Tool):
     name = "user_input"
