@@ -852,7 +852,7 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
                     **additional_args,
                 )
                 memory_step.model_output_message = chat_message
-                model_output = chat_message.content
+                model_output = chat_message.content if not iscoroutine(chat_message.content) else await chat_message.content
                 await self.logger.log_markdown(
                     content=model_output,
                     title="Output message of the LLM:",
