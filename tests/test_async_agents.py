@@ -998,7 +998,7 @@ class TestCodeAgent:
         agent.run = AsyncMock(return_value="Test output")
         agent.write_memory_to_messages = AsyncMock(return_value=[{"content": "Test summary"}])
 
-        result = agent("Test request")
+        result = await agent("Test request")
         expected_summary = "Here is the final answer from your managed agent 'test_agent':\nTest output"
         if provide_run_summary:
             expected_summary += (

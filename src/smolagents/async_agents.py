@@ -675,12 +675,14 @@ class AsyncToolCallingAgent(AsyncMultiStepAgent):
             # Call tool with appropriate arguments
             if isinstance(arguments, dict):
                 if is_managed_agent:
-                    return await tool(**arguments)
+                    output = await tool(**arguments)
+                    return output
                 else:
                     return tool(**arguments, sanitize_inputs_outputs=True)
             elif isinstance(arguments, str):
                 if is_managed_agent:
-                    return await tool(arguments)
+                    output = await tool(arguments)
+                    return output
                 else:
                     # If the tool is not a managed agent, we need to sanitize the inputs and outputs
                     # before passing them to the tool.
