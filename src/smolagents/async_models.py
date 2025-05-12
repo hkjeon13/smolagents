@@ -174,7 +174,7 @@ class AsyncOpenAIServerModel(AsyncApiModel):
             **kwargs,
         )
 
-        async for event in self.client.chat.completions.acreate(
+        async for event in self.client.chat.completions.create(
             **completion_kwargs, stream=True, stream_options={"include_usage": True}
         ):
             if event.choices:
@@ -207,7 +207,7 @@ class AsyncOpenAIServerModel(AsyncApiModel):
             convert_images_to_image_urls=True,
             **kwargs,
         )
-        response = self.client.chat.completions.acreate(**completion_kwargs)
+        response = self.client.chat.completions.create(**completion_kwargs)
         self.last_input_token_count = response.usage.prompt_tokens
         self.last_output_token_count = response.usage.completion_tokens
 
