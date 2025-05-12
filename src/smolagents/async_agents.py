@@ -8,6 +8,7 @@ import textwrap
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Generator, AsyncGenerator
+from inspect import iscoroutine
 from logging import getLogger
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypedDict
@@ -63,6 +64,7 @@ from .utils import (
 )
 from .agents import PromptTemplates, EMPTY_PROMPT_TEMPLATES, MultiStepAgent, populate_template
 from .async_monitoring import AsyncMonitor, AsyncAgentLogger
+
 logger = getLogger(__name__)
 
 
@@ -573,7 +575,8 @@ class AsyncToolCallingAgent(AsyncMultiStepAgent):
                 tools_to_call_from=list(self.tools.values()),
             )
             memory_step.model_output_message = chat_message
-            model_output = chat_message.content
+            model_output = chat_message.content if not iscoroutine(chat_message.content) else await chat_message.content
+
             await self.logger.log_markdown(
                 content=model_output if model_output else str(chat_message.raw),
                 title="Output message of the LLM:",

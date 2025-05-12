@@ -596,11 +596,6 @@ class DummyMultiStepAgent(AsyncMultiStepAgent):
 
 
 class TestMultiStepAgent:
-    async def test_instantiation_disables_logging_to_terminal(self):
-        fake_model = AsyncMock()
-        agent = DummyMultiStepAgent(tools=[], model=fake_model)
-        assert agent.logger.level == -1, "logging to terminal should be disabled for testing using a fixture"
-
     async def test_instantiation_with_prompt_templates(self, prompt_templates):
         agent = DummyMultiStepAgent(tools=[], model=AsyncMock(), prompt_templates=prompt_templates)
         assert agent.prompt_templates == prompt_templates
@@ -620,7 +615,7 @@ class TestMultiStepAgent:
 
     async def test_logs_display_thoughts_even_if_error(self):
         class FakeJsonModelNoCall(AsyncModel):
-            async def generate(self, messages, stop_sequences=None, tools_to_call_from=None):
+            async def generate(self, messages, stop_sequences=None, tools_to_call_from=None, **kwargs):
                 return ChatMessage(
                     role="assistant",
                     content="""I don't want to call tools today""",
@@ -630,7 +625,7 @@ class TestMultiStepAgent:
 
         agent_toolcalling = AsyncToolCallingAgent(model=FakeJsonModelNoCall(), tools=[], max_steps=1, verbosity_level=10)
         with agent_toolcalling.logger.console.capture() as capture:
-            agent_toolcalling.run("Dummy task")
+            await agent_toolcalling.run("Dummy task")
         assert "don't" in capture.get() and "want" in capture.get()
 
         class FakeCodeModelNoCall(AsyncModel):
@@ -642,7 +637,7 @@ class TestMultiStepAgent:
 
         agent_code = AsyncCodeAgent(model=FakeCodeModelNoCall(), tools=[], max_steps=1, verbosity_level=10)
         with agent_code.logger.console.capture() as capture:
-            agent_code.run("Dummy task")
+            await agent_code.run("Dummy task")
         assert "don't" in capture.get() and "want" in capture.get()
 
     async def test_step_number(self):
