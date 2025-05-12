@@ -19,6 +19,7 @@ from .utils import escape_code_brackets
 
 __all__ = ["AsyncAgentLogger", "LogLevel", "AsyncMonitor"]
 
+
 YELLOW_HEX = "#d4b702"
 
 
