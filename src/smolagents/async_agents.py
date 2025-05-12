@@ -46,6 +46,7 @@ from .async_models import AsyncModel
 from .monitoring import (
     YELLOW_HEX,
     LogLevel,
+    AgentLogger,
 )
 from .remote_executors import DockerExecutor, E2BExecutor
 from .tools import Tool
@@ -63,8 +64,7 @@ from .utils import (
     truncate_content,
 )
 from .agents import PromptTemplates, EMPTY_PROMPT_TEMPLATES, MultiStepAgent, populate_template
-from .async_monitoring import AsyncMonitor, AsyncAgentLogger
-
+from .async_monitoring import AsyncMonitor
 logger = getLogger(__name__)
 
 
@@ -85,7 +85,7 @@ class AsyncMultiStepAgentBase:
             description: str | None = None,
             provide_run_summary: bool = False,
             final_answer_checks: list[Callable] | None = None,
-            logger: AsyncAgentLogger | None = None,
+            logger: AgentLogger | None = None,
     ):
         raise NotImplementedError
 
@@ -166,7 +166,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
         description: str | None = None,
         provide_run_summary: bool = False,
         final_answer_checks: list[Callable] | None = None,
-        logger: AsyncAgentLogger | None = None,
+        logger: AgentLogger | None = None,
     ):
         self.agent_name = self.__class__.__name__
         self.model = model
@@ -203,7 +203,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
         self.memory = AgentMemory(self.system_prompt)
 
         if logger is None:
-            self.logger = AsyncAgentLogger(level=verbosity_level)
+            self.logger = AgentLogger(level=verbosity_level)
         else:
             self.logger = logger
 
@@ -252,7 +252,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
             self.memory.reset()
             self.monitor.reset()
 
-        await self.logger.log_task(
+        self.logger.log_task(
             content=self.task.strip(),
             subtitle=f"{type(self.model).__name__} - {(self.model.model_id if hasattr(self.model, 'model_id') else '')}",
             level=LogLevel.INFO,
@@ -326,7 +326,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
 
 
     async def _execute_step(self, memory_step: ActionStep) -> AsyncGenerator[Any]:
-        await self.logger.log_rule(f"Step {self.step_number}", level=LogLevel.INFO)
+        self.logger.log_rule(f"Step {self.step_number}", level=LogLevel.INFO)
         final_answer = None
         async for el in self._step_stream(memory_step):
             final_answer = el
@@ -443,7 +443,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
                 f"""I still need to solve the task I was given:\n```\n{self.task}\n```\n\nHere are the facts I know and my new/updated plan of action to solve the task:\n```\n{plan_message_content}\n```"""
             )
         log_headline = "Initial plan" if is_first_step else "Updated plan"
-        await self.logger.log(Rule(f"[bold]{log_headline}", style="orange"), Text(plan), level=LogLevel.INFO)
+        self.logger.log(Rule(f"[bold]{log_headline}", style="orange"), Text(plan), level=LogLevel.INFO)
 
         yield PlanningStep(
             model_input_messages=input_messages,
@@ -580,7 +580,7 @@ class AsyncToolCallingAgent(AsyncMultiStepAgent):
             else:
                 model_output = chat_message.content
 
-            await self.logger.log_markdown(
+            self.logger.log_markdown(
                 content=model_output if model_output else str(chat_message.raw),
                 title="Output message of the LLM:",
                 level=LogLevel.DEBUG,
@@ -606,7 +606,7 @@ class AsyncToolCallingAgent(AsyncMultiStepAgent):
         memory_step.tool_calls = [ToolCall(name=tool_name, arguments=tool_arguments, id=tool_call_id)]
 
         # Execute
-        await self.logger.log(
+        self.logger.log(
             Panel(Text(f"Calling tool: '{tool_name}' with arguments: {tool_arguments}")),
             level=LogLevel.INFO,
         )
@@ -622,13 +622,13 @@ class AsyncToolCallingAgent(AsyncMultiStepAgent):
                 # if the answer is a state variable, return the value
                 # State variables are not JSON-serializable (AgentImage, AgentAudio) so can't be passed as arguments to execute_tool_call
                 final_answer = self.state[answer]
-                await self.logger.log(
+                self.logger.log(
                     f"[bold {YELLOW_HEX}]Final answer:[/bold {YELLOW_HEX}] Extracting key '{answer}' from state to return value '{final_answer}'.",
                     level=LogLevel.INFO,
                 )
             else:
                 final_answer = await self.execute_tool_call("final_answer", {"answer": answer})
-                await self.logger.log(
+                self.logger.log(
                     Text(f"Final answer: {final_answer}", style=f"bold {YELLOW_HEX}"),
                     level=LogLevel.INFO,
                 )
@@ -651,7 +651,7 @@ class AsyncToolCallingAgent(AsyncMultiStepAgent):
                 updated_information = f"Stored '{observation_name}' in memory."
             else:
                 updated_information = str(observation).strip()
-            await self.logger.log(
+            self.logger.log(
                 f"Observations: {updated_information.replace('[', '|')}",  # escape potential rich-tag-like components
                 level=LogLevel.INFO,
             )
@@ -859,7 +859,7 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
                     model_output = await chat_message.content
                 else:
                     model_output = chat_message.content
-                await self.logger.log_markdown(
+                self.logger.log_markdown(
                     content=model_output,
                     title="Output message of the LLM:",
                     level=LogLevel.DEBUG,
@@ -892,7 +892,7 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
         ]
 
         ### Execute action ###
-        await self.logger.log_code(title="Executing parsed code:", content=code_action, level=LogLevel.INFO)
+        self.logger.log_code(title="Executing parsed code:", content=code_action, level=LogLevel.INFO)
         is_final_answer = False
         try:
             output, execution_logs, is_final_answer = self.python_executor(code_action)
@@ -912,10 +912,10 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
                         Text(execution_logs),
                     ]
                     memory_step.observations = "Execution logs:\n" + execution_logs
-                    await self.logger.log(Group(*execution_outputs_console), level=LogLevel.INFO)
+                    self.logger.log(Group(*execution_outputs_console), level=LogLevel.INFO)
             error_msg = str(e)
             if "Import of " in error_msg and " is not allowed" in error_msg:
-                await self.logger.log(
+                self.logger.log(
                     "[bold red]Warning to user: Code execution failed due to an unauthorized import - Consider passing said import under `additional_authorized_imports` when initializing your CodeAgent.",
                     level=LogLevel.INFO,
                 )
@@ -931,6 +931,6 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
                 style=(f"bold {YELLOW_HEX}" if is_final_answer else ""),
             ),
         ]
-        await self.logger.log(Group(*execution_outputs_console), level=LogLevel.INFO)
+        self.logger.log(Group(*execution_outputs_console), level=LogLevel.INFO)
         memory_step.action_output = output
         yield output if is_final_answer else None
