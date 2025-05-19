@@ -23,13 +23,13 @@ from typing import TYPE_CHECKING, Any
 from smolagents.tools import Tool
 
 
-__all__ = ["MCPClient"]
+__all__ = ["AsyncMCPClient"]
 
 if TYPE_CHECKING:
     from mcpadapt.core import StdioServerParameters
 
 
-class MCPClient:
+class AsyncMCPClient:
     """Manages the connection to an MCP server and make its tools available to SmolAgents.
 
     Note: tools can only be accessed after the connection has been started with the
