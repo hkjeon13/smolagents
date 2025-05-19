@@ -2,80 +2,129 @@
 # coding=utf-8
 
 # Copyright 2025 The HuggingFace Inc. team. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Licensed under the Apache License, Version 2.0.
 
 from __future__ import annotations
 
+import asyncio
+import jsonref  # type: ignore
+import keyword
+import logging
+import re
+from inspect import iscoroutinefunction
 from types import TracebackType
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Callable, Coroutine
 
+import mcp
+import smolagents  # type: ignore
+from mcpadapt.core import MCPAdapt, ToolAdapter
 from smolagents.tools import Tool
 
-
-__all__ = ["AsyncMCPClient"]
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from mcpadapt.core import StdioServerParameters
 
 
-class AsyncMCPClient:
-    """Manages the connection to an MCP server and make its tools available to SmolAgents.
+def _sanitize_function_name(name: str) -> str:
+    name = name.replace("-", "_")
+    name = re.sub(r"[^\w_]", "", name)
+    if name[0].isdigit():
+        name = f"_{name}"
+    if keyword.iskeyword(name):
+        name = f"{name}_"
+    return name
 
-    Note: tools can only be accessed after the connection has been started with the
-        `connect()` method, done during the init. If you don't use the context manager
-        we strongly encourage to use "try ... finally" to ensure the connection is cleaned up.
 
-    Args:
-        server_parameters (StdioServerParameters | dict[str, Any] | list[StdioServerParameters | dict[str, Any]]):
-            MCP server parameters (stdio or sse). Can be a list if you want to connect multiple MCPs at once.
+class SmolAgentsAdapter(ToolAdapter):
+    """Adapter for the `smolagents` framework.
 
-    Example:
-        ```python
-        # fully managed context manager + stdio
-        with MCPClient(...) as tools:
-            # tools are now available
-
-        # context manager + sse
-        with MCPClient({"url": "http://localhost:8000/sse"}) as tools:
-            # tools are now available
-
-        # manually manage the connection via the mcp_client object:
-        try:
-            mcp_client = MCPClient(...)
-            tools = mcp_client.get_tools()
-
-            # use your tools here.
-        finally:
-            mcp_client.stop()
-        ```
+    Note that the `smolagents` framework does not support async tools directly,
+    so this adapter only implements the sync `adapt` method.
     """
+
+    def adapt(
+        self,
+        func: Callable[[dict | None], mcp.types.CallToolResult],
+        mcp_tool: mcp.types.Tool,
+    ) -> smolagents.Tool:
+        class MCPAdaptTool(smolagents.Tool):
+            def __init__(
+                self,
+                name: str,
+                description: str,
+                inputs: dict[str, dict[str, str]],
+                output_type: str,
+            ):
+                self.name = _sanitize_function_name(name)
+                self.description = description
+                self.inputs = inputs
+                self.output_type = output_type
+                self.is_initialized = True
+                self.skip_forward_signature_validation = True
+
+            def forward(self, *args, **kwargs) -> str:
+                if len(args) > 0:
+                    if len(args) == 1 and isinstance(args[0], dict) and not kwargs:
+                        if iscoroutinefunction(func):
+                            future = asyncio.run_coroutine_threadsafe(func(args[0]), asyncio.get_event_loop())
+                            mcp_output = future.result()
+                        else:
+                            mcp_output = func(args[0])
+                    else:
+                        raise ValueError(f"tool {self.name} does not support multiple positional arguments or combined positional and keyword arguments")
+                else:
+                    if iscoroutinefunction(func):
+                        future = asyncio.run_coroutine_threadsafe(func(kwargs), asyncio.get_event_loop())
+                        mcp_output = future.result()
+                    else:
+                        mcp_output = func(kwargs)
+
+                if len(mcp_output.content) == 0:
+                    raise ValueError(f"tool {self.name} returned empty content")
+
+                if len(mcp_output.content) > 1:
+                    logger.warning(f"tool {self.name} returned multiple content items, using the first")
+
+                if not isinstance(mcp_output.content[0], mcp.types.TextContent):
+                    raise ValueError(f"tool {self.name} returned a non-text content: `{type(mcp_output.content[0])}`")
+
+                return mcp_output.content[0].text  # type: ignore
+
+        input_schema = {
+            k: v for k, v in jsonref.replace_refs(mcp_tool.inputSchema).items() if k != "$defs"
+        }
+
+        for k, v in input_schema["properties"].items():
+            v.setdefault("description", "see tool description")
+            v.setdefault("type", "string")
+
+        return MCPAdaptTool(
+            name=mcp_tool.name,
+            description=mcp_tool.description or "",
+            inputs=input_schema["properties"],
+            output_type="string",
+        )
+
+    async def async_adapt(
+        self,
+        afunc: Callable[[dict | None], Coroutine[Any, Any, mcp.types.CallToolResult]],
+        mcp_tool: mcp.types.Tool,
+    ) -> smolagents.Tool:
+        return self.adapt(afunc, mcp_tool)
+
+
+class AsyncMCPClient:
+    """Manages connection to an MCP server and exposes tools for SmolAgents."""
 
     def __init__(
         self,
         server_parameters: "StdioServerParameters" | dict[str, Any] | list["StdioServerParameters" | dict[str, Any]],
     ):
-        try:
-            from mcpadapt.core import MCPAdapt
-            from mcpadapt.smolagents_adapter import SmolAgentsAdapter
-        except ModuleNotFoundError:
-            raise ModuleNotFoundError("Please install 'mcp' extra to use MCPClient: `pip install 'smolagents[mcp]'`")
         self._adapter = MCPAdapt(server_parameters, SmolAgentsAdapter())
         self._tools: list[Tool] | None = None
-        # Removed self.connect() from __init__
 
     def connect(self):
-        """Connect to the MCP server and initialize the tools."""
         self._tools = self._adapter.__enter__()
 
     def disconnect(
@@ -84,60 +133,29 @@ class AsyncMCPClient:
         exc_value: BaseException | None = None,
         exc_traceback: TracebackType | None = None,
     ):
-        """Disconnect from the MCP server"""
         self._adapter.__exit__(exc_type, exc_value, exc_traceback)
 
     async def aconnect(self):
-        """Asynchronously connect to the MCP server and initialize the tools."""
         self._tools = await self._adapter.__aenter__()
 
     async def adisconnect(self, exc_type=None, exc_value=None, exc_traceback=None):
-        """Asynchronously disconnect from the MCP server."""
         await self._adapter.__aexit__(exc_type, exc_value, exc_traceback)
 
     def get_tools(self) -> list[Tool]:
-        """The SmolAgents tools available from the MCP server.
-
-        Note: for now, this always returns the tools available at the creation of the session,
-        but it will in a future release return also new tools available from the MCP server if
-        any at call time.
-
-        Raises:
-            ValueError: If the MCP server tools is None (usually assuming the server is not started).
-
-        Returns:
-            list[Tool]: The SmolAgents tools available from the MCP server.
-        """
         if self._tools is None:
-            raise ValueError(
-                "Couldn't retrieve tools from MCP server, run `connect()` or `aconnect()` first before accessing `tools`"
-            )
+            raise ValueError("Run `connect()` or `aconnect()` before accessing tools.")
         return self._tools
 
     def __enter__(self) -> list[Tool]:
-        """Connect to the MCP server and return the tools directly."""
         self.connect()
         return self._tools
 
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_value: BaseException | None,
-        exc_traceback: TracebackType | None,
-    ):
-        """Disconnect from the MCP server."""
+    def __exit__(self, exc_type, exc_value, exc_traceback):
         self.disconnect(exc_type, exc_value, exc_traceback)
 
     async def __aenter__(self) -> list[Tool]:
-        """Asynchronously connect to the MCP server and return the tools directly."""
         await self.aconnect()
         return self._tools
 
-    async def __aexit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_value: BaseException | None,
-        exc_traceback: TracebackType | None,
-    ):
-        """Asynchronously disconnect from the MCP server."""
+    async def __aexit__(self, exc_type, exc_value, exc_traceback):
         await self.adisconnect(exc_type, exc_value, exc_traceback)
