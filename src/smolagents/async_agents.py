@@ -262,6 +262,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
             # Stream steps as they are executed
             async for step in self._run_stream(task=self.task, max_steps=max_steps, images=images):
                 yield step
+            return
 
         # Outputs are returned only at the end. We only look at the last step.
         steps = []
