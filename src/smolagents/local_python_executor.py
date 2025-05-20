@@ -1424,8 +1424,8 @@ async def evaluate_ast(
         return await evaluate_attribute(expression, *common_params)
     elif isinstance(expression, ast.Await):
         awaited = await evaluate_ast(expression.value, *common_params)
-        if inspect.iscoroutine(awaited):
-            return asyncio.ensure_future(awaited)
+        if inspect.iscoroutine(awaited) or inspect.isawaitable(awaited):
+            return await awaited
         else:
             return awaited
     elif isinstance(expression, ast.Slice):
