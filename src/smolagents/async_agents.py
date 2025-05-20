@@ -274,14 +274,22 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
         """
         Run the agent with the given task and return the final answer.
         """
+        search_result = await self.tools["search_tavily"](query="Lotte News")
+        print("###### Search result (6):", search_result)
+
         final_answer = None
         action_step = None
         step_start_time = time.time()
         self.step_number = 1
         while final_answer is None and self.step_number <= max_steps:
+            search_result = await self.tools["search_tavily"](query="Lotte News")
+            print("###### Search result (7):", search_result)
             if self.interrupt_switch:
                 raise AgentError("Agent interrupted.", self.logger)
             step_start_time = time.time()
+            search_result = await self.tools["search_tavily"](query="Lotte News")
+            print("###### Search result (8):", search_result)
+
             if self.planning_interval is not None and (
                     self.step_number == 1 or (self.step_number - 1) % self.planning_interval == 0
             ):
@@ -293,6 +301,8 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
             action_step = ActionStep(
                 step_number=self.step_number, start_time=step_start_time, observations_images=images
             )
+            search_result = await self.tools["search_tavily"](query="Lotte News")
+            print("###### Search result (9):", search_result)
             try:
                 steps = self._execute_step(action_step)
                 el = ""
@@ -861,6 +871,10 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
                 Perform one step in the ReAct framework: the agent thinks, acts, and observes the result.
                 Yields either None if the step is not final, or the final answer.
                 """
+
+        search_result = await self.tools["search_tavily"](query="Lotte News")
+        print("###### Search result (5):", search_result)
+
         memory_messages = self.write_memory_to_messages()
 
         input_messages = memory_messages.copy()
