@@ -259,16 +259,13 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
             #self.python_executor.send_tools({**self.tools, })
 
         if stream:
-            # Stream steps as they are executed
-            async for step in self._run_stream(task=self.task, max_steps=max_steps, images=images):
-                yield step
-            return
+            return self._run_stream(task=self.task, max_steps=max_steps, images=images)
 
         # Outputs are returned only at the end. We only look at the last step.
         steps = []
         async for step in self._run_stream(task=self.task, max_steps=max_steps, images=images):
             steps.append(step)
-        yield steps[-1].final_answer
+        return steps[-1].final_answer
 
     async def _run_stream(
             self, task: str, max_steps: int, images: list["PIL.Image.Image"] | None = None
@@ -276,22 +273,16 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
         """
         Run the agent with the given task and return the final answer.
         """
-        search_result = await self.tools["search_tavily"](query="Lotte News")
-        print("###### Search result (6):", search_result)
+        # TODO: How to continue the Connection from MCP server in the iterative stream.
 
         final_answer = None
         action_step = None
         step_start_time = time.time()
         self.step_number = 1
         while final_answer is None and self.step_number <= max_steps:
-            search_result = await self.tools["search_tavily"](query="Lotte News")
-            print("###### Search result (7):", search_result)
             if self.interrupt_switch:
                 raise AgentError("Agent interrupted.", self.logger)
             step_start_time = time.time()
-            search_result = await self.tools["search_tavily"](query="Lotte News")
-            print("###### Search result (8):", search_result)
-
             if self.planning_interval is not None and (
                     self.step_number == 1 or (self.step_number - 1) % self.planning_interval == 0
             ):
