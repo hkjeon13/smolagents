@@ -569,6 +569,23 @@ class AsyncToolCallingAgent(AsyncMultiStepAgent):
         self.executor_kwargs = executor_kwargs or {}
         self.python_executor = self.create_python_executor()
 
+    def create_python_executor(self) -> PythonExecutor:
+        match self.executor_type:
+            case "e2b" | "docker":
+                if self.managed_agents:
+                    raise Exception("Managed agents are not yet supported with remote code execution.")
+                if self.executor_type == "e2b":
+                    return E2BExecutor(self.additional_authorized_imports, self.logger, **self.executor_kwargs)
+                else:
+                    return DockerExecutor(self.additional_authorized_imports, self.logger, **self.executor_kwargs)
+            case "local":
+                return LocalPythonExecutor(
+                    self.additional_authorized_imports,
+                    max_print_outputs_length=self.max_print_outputs_length,
+                )
+            case _:  # if applicable
+                raise ValueError(f"Unsupported executor type: {self.executor_type}")
+
     def initialize_system_prompt(self) -> str:
         system_prompt = populate_template(
             self.prompt_templates["system_prompt"],
@@ -919,7 +936,7 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
         self.logger.log_code(title="Executing parsed code:", content=code_action, level=LogLevel.INFO)
         is_final_answer = False
         try:
-            output, execution_logs, is_final_answer = self.python_executor(code_action)
+            output, execution_logs, is_final_answer = await self.python_executor(code_action)
             execution_outputs_console = []
             if len(execution_logs) > 0:
                 execution_outputs_console += [
