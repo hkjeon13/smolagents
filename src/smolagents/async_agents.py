@@ -229,8 +229,6 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
         """
         Run the agent with the given task and return the final answer.
         """
-        search_result = await self.tools["search_tavily"](query="Lotte News")
-        print("###### Search result (11):", search_result)
         max_steps = max_steps or self.max_steps
         self.task = task
         self.interrupt_switch = False
@@ -254,8 +252,6 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
         )
 
         self.memory.steps.append(TaskStep(task=self.task, task_images=images))
-        search_result = await self.tools["search_tavily"](query="Lotte News")
-        print("###### Search result (12):", search_result)
 
         if getattr(self, "python_executor", None):
             self.python_executor.send_variables(variables=self.state)
@@ -263,16 +259,15 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
             #self.python_executor.send_tools({**self.tools, })
 
         if stream:
-            search_result = await self.tools["search_tavily"](query="Lotte News")
-            print("###### Search result (13):", search_result)
-            # The steps are returned as they are executed through a generator to iterate on.
-            return self._run_stream(task=self.task, max_steps=max_steps, images=images)
+            # Stream steps as they are executed
+            async for step in self._run_stream(task=self.task, max_steps=max_steps, images=images):
+                yield step
 
         # Outputs are returned only at the end. We only look at the last step.
         steps = []
         async for step in self._run_stream(task=self.task, max_steps=max_steps, images=images):
             steps.append(step)
-        return steps[-1].final_answer
+        yield steps[-1].final_answer
 
     async def _run_stream(
             self, task: str, max_steps: int, images: list["PIL.Image.Image"] | None = None
