@@ -935,11 +935,9 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
         ### Execute action ###
         self.logger.log_code(title="Executing parsed code:", content=code_action, level=LogLevel.INFO)
         is_final_answer = False
-        search_result = None
+        search_result = await self.tools["search_tavily"](query="Lotte News")
+        print("###### Search result:", search_result)
         try:
-            search_result = await self.tools["search_tavily"](query="Lotte News")
-            raise ValueError(f"## {search_result}")
-
             output, execution_logs, is_final_answer = await self.python_executor(code_action)
             execution_outputs_console = []
             if len(execution_logs) > 0:
@@ -949,8 +947,6 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
                 ]
             observation = "Execution logs:\n" + execution_logs
         except Exception as e:
-            print(f"## Search result: {search_result}")
-
             if hasattr(self.python_executor, "state") and "_print_outputs" in self.python_executor.state:
                 execution_logs = str(self.python_executor.state["_print_outputs"])
                 if len(execution_logs) > 0:
