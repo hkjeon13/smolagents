@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     import PIL.Image
 
 from .agent_types import AgentAudio, AgentImage, handle_agent_output_types
-from .default_tools import TOOL_MAPPING, FinalAnswerTool
+from .async_default_tools import TOOL_MAPPING, AsyncFinalAnswerTool
 from .local_python_executor import BASE_BUILTIN_MODULES, LocalPythonExecutor, PythonExecutor, fix_final_answer_code
 from .memory import (
     ActionStep,
@@ -215,7 +215,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
                     if name != "python_interpreter" or self.__class__.__name__ == "AsyncToolCallingAgent"
                 }
             )
-        self.tools.setdefault("final_answer", FinalAnswerTool())
+        self.tools.setdefault("final_answer", AsyncFinalAnswerTool())
 
     async def run(
             self,

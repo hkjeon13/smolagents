@@ -15,39 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import ast
-import asyncio
-import threading
-
-
-# Helper function to run async coroutine in a synchronous context
-def run_async_as_sync(coro):
-    result = {}
-
-    def runner():
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            result["value"] = loop.run_until_complete(coro)
-        except Exception as e:
-            result["error"] = e
-        finally:
-            loop.close()
-
-    t = threading.Thread(target=runner)
-    t.start()
-    t.join()
-
-    if "error" in result:
-        raise result["error"]
-    return result["value"]
-
-
 import builtins
 import difflib
 import inspect
 import logging
 import math
 import re
+import asyncio
 from collections.abc import Callable, Mapping
 from functools import wraps
 from importlib import import_module
@@ -56,6 +30,7 @@ from typing import Any
 
 from .tools import Tool
 from .utils import BASE_BUILTIN_MODULES, truncate_content
+
 
 logger = logging.getLogger(__name__)
 
@@ -284,11 +259,11 @@ def safer_eval(func: Callable):
 
     @wraps(func)
     def _check_return(
-            expression,
-            state,
-            static_tools,
-            custom_tools,
-            authorized_imports=BASE_BUILTIN_MODULES,
+        expression,
+        state,
+        static_tools,
+        custom_tools,
+        authorized_imports=BASE_BUILTIN_MODULES,
     ):
         result = func(expression, state, static_tools, custom_tools, authorized_imports=authorized_imports)
         if isinstance(result, ModuleType):
@@ -301,9 +276,9 @@ def safer_eval(func: Callable):
             for qualified_function_name in DANGEROUS_FUNCTIONS:
                 module_name, function_name = qualified_function_name.rsplit(".", 1)
                 if (
-                        function_name not in static_tools
-                        and result.__name__ == function_name
-                        and result.__module__ == module_name
+                    function_name not in static_tools
+                    and result.__name__ == function_name
+                    and result.__module__ == module_name
                 ):
                     raise InterpreterError(f"Forbidden access to function: {function_name}")
         return result
@@ -312,11 +287,11 @@ def safer_eval(func: Callable):
 
 
 def evaluate_attribute(
-        expression: ast.Attribute,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    expression: ast.Attribute,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> Any:
     if expression.attr.startswith("__") and expression.attr.endswith("__"):
         raise InterpreterError(f"Forbidden access to dunder attribute: {expression.attr}")
@@ -325,11 +300,11 @@ def evaluate_attribute(
 
 
 def evaluate_unaryop(
-        expression: ast.UnaryOp,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    expression: ast.UnaryOp,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> Any:
     operand = evaluate_ast(expression.operand, state, static_tools, custom_tools, authorized_imports)
     if isinstance(expression.op, ast.USub):
@@ -345,11 +320,11 @@ def evaluate_unaryop(
 
 
 def evaluate_lambda(
-        lambda_expression: ast.Lambda,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    lambda_expression: ast.Lambda,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> Callable:
     args = [arg.arg for arg in lambda_expression.args.args]
 
@@ -369,11 +344,11 @@ def evaluate_lambda(
 
 
 def evaluate_while(
-        while_loop: ast.While,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    while_loop: ast.While,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> None:
     iterations = 0
     while evaluate_ast(while_loop.test, state, static_tools, custom_tools, authorized_imports):
@@ -391,11 +366,11 @@ def evaluate_while(
 
 
 def create_function(
-        func_def: ast.FunctionDef,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    func_def: ast.FunctionDef,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> Callable:
     source_code = ast.unparse(func_def)
 
@@ -407,7 +382,7 @@ def create_function(
         ]
 
         # Apply default values
-        defaults = dict(zip(arg_names[-len(default_values):], default_values))
+        defaults = dict(zip(arg_names[-len(default_values) :], default_values))
 
         # Set positional arguments
         for name, value in zip(arg_names, args):
@@ -458,22 +433,22 @@ def create_function(
 
 
 def evaluate_function_def(
-        func_def: ast.FunctionDef,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    func_def: ast.FunctionDef,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> Callable:
     custom_tools[func_def.name] = create_function(func_def, state, static_tools, custom_tools, authorized_imports)
     return custom_tools[func_def.name]
 
 
 def evaluate_class_def(
-        class_def: ast.ClassDef,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    class_def: ast.ClassDef,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> type:
     class_name = class_def.name
     bases = [evaluate_ast(base, state, static_tools, custom_tools, authorized_imports) for base in class_def.bases]
@@ -501,10 +476,10 @@ def evaluate_class_def(
                         authorized_imports,
                     )
         elif (
-                isinstance(stmt, ast.Expr)
-                and stmt == class_def.body[0]
-                and isinstance(stmt.value, ast.Constant)
-                and isinstance(stmt.value.value, str)
+            isinstance(stmt, ast.Expr)
+            and stmt == class_def.body[0]
+            and isinstance(stmt.value, ast.Constant)
+            and isinstance(stmt.value.value, str)
         ):
             # Check if it is a docstring: first statement in class body which is a string literal expression
             class_dict["__doc__"] = stmt.value.value
@@ -517,11 +492,11 @@ def evaluate_class_def(
 
 
 def evaluate_annassign(
-        annassign: ast.AnnAssign,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    annassign: ast.AnnAssign,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> Any:
     # If there's a value to assign, evaluate it
     if annassign.value:
@@ -534,11 +509,11 @@ def evaluate_annassign(
 
 
 def evaluate_augassign(
-        expression: ast.AugAssign,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    expression: ast.AugAssign,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> Any:
     def get_current_value(target: ast.AST) -> Any:
         if isinstance(target, ast.Name):
@@ -606,11 +581,11 @@ def evaluate_augassign(
 
 
 def evaluate_boolop(
-        node: ast.BoolOp,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    node: ast.BoolOp,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> Any:
     # Determine which value should trigger short-circuit based on operation type:
     # - 'and' returns the first falsy value encountered (or the last value if all are truthy)
@@ -626,11 +601,11 @@ def evaluate_boolop(
 
 
 def evaluate_binop(
-        binop: ast.BinOp,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    binop: ast.BinOp,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> Any:
     # Recursively evaluate the left and right operands
     left_val = evaluate_ast(binop.left, state, static_tools, custom_tools, authorized_imports)
@@ -648,7 +623,7 @@ def evaluate_binop(
     elif isinstance(binop.op, ast.Mod):
         return left_val % right_val
     elif isinstance(binop.op, ast.Pow):
-        return left_val ** right_val
+        return left_val**right_val
     elif isinstance(binop.op, ast.FloorDiv):
         return left_val // right_val
     elif isinstance(binop.op, ast.BitAnd):
@@ -666,11 +641,11 @@ def evaluate_binop(
 
 
 def evaluate_assign(
-        assign: ast.Assign,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    assign: ast.Assign,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> Any:
     result = evaluate_ast(assign.value, state, static_tools, custom_tools, authorized_imports)
     if len(assign.targets) == 1:
@@ -690,12 +665,12 @@ def evaluate_assign(
 
 
 def set_value(
-        target: ast.AST,
-        value: Any,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    target: ast.AST,
+    value: Any,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> None:
     if isinstance(target, ast.Name):
         if target.id in static_tools:
@@ -721,11 +696,11 @@ def set_value(
 
 
 def evaluate_call(
-        call: ast.Call,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    call: ast.Call,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> Any:
     if not isinstance(call.func, (ast.Call, ast.Lambda, ast.Attribute, ast.Name, ast.Subscript)):
         raise InterpreterError(f"This is not a correct function: {call.func}).")
@@ -798,15 +773,18 @@ def evaluate_call(
             raise InterpreterError(
                 f"Invoking a builtin function that has not been explicitly added as a tool is not allowed ({func_name})."
             )
-        return func(*args, **kwargs)
+        result = func(*args, **kwargs)
+        if inspect.iscoroutine(result) or inspect.isasyncgen(result):
+            return asyncio.run(result)
+        return result
 
 
 def evaluate_subscript(
-        subscript: ast.Subscript,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    subscript: ast.Subscript,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> Any:
     index = evaluate_ast(subscript.slice, state, static_tools, custom_tools, authorized_imports)
     value = evaluate_ast(subscript.value, state, static_tools, custom_tools, authorized_imports)
@@ -822,11 +800,11 @@ def evaluate_subscript(
 
 
 def evaluate_name(
-        name: ast.Name,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    name: ast.Name,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> Any:
     if name.id in state:
         return state[name.id]
@@ -843,11 +821,11 @@ def evaluate_name(
 
 
 def evaluate_condition(
-        condition: ast.Compare,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    condition: ast.Compare,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> bool | object:
     result = True
     left = evaluate_ast(condition.left, state, static_tools, custom_tools, authorized_imports)
@@ -885,11 +863,11 @@ def evaluate_condition(
 
 
 def evaluate_if(
-        if_statement: ast.If,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    if_statement: ast.If,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> Any:
     result = None
     test_result = evaluate_ast(if_statement.test, state, static_tools, custom_tools, authorized_imports)
@@ -907,11 +885,11 @@ def evaluate_if(
 
 
 def evaluate_for(
-        for_loop: ast.For,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    for_loop: ast.For,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> Any:
     result = None
     iterator = evaluate_ast(for_loop.iter, state, static_tools, custom_tools, authorized_imports)
@@ -940,11 +918,11 @@ def evaluate_for(
 
 
 def evaluate_listcomp(
-        listcomp: ast.ListComp,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    listcomp: ast.ListComp,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> list[Any]:
     def inner_evaluate(generators: list[ast.comprehension], index: int, current_state: dict[str, Any]) -> list[Any]:
         if index >= len(generators):
@@ -974,8 +952,8 @@ def evaluate_listcomp(
             else:
                 new_state[generator.target.id] = value
             if all(
-                    evaluate_ast(if_clause, new_state, static_tools, custom_tools, authorized_imports)
-                    for if_clause in generator.ifs
+                evaluate_ast(if_clause, new_state, static_tools, custom_tools, authorized_imports)
+                for if_clause in generator.ifs
             ):
                 result.extend(inner_evaluate(generators, index + 1, new_state))
         return result
@@ -984,11 +962,11 @@ def evaluate_listcomp(
 
 
 def evaluate_setcomp(
-        setcomp: ast.SetComp,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    setcomp: ast.SetComp,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> set[Any]:
     result = set()
     for gen in setcomp.generators:
@@ -1004,8 +982,8 @@ def evaluate_setcomp(
                 authorized_imports,
             )
             if all(
-                    evaluate_ast(if_clause, new_state, static_tools, custom_tools, authorized_imports)
-                    for if_clause in gen.ifs
+                evaluate_ast(if_clause, new_state, static_tools, custom_tools, authorized_imports)
+                for if_clause in gen.ifs
             ):
                 element = evaluate_ast(
                     setcomp.elt,
@@ -1019,11 +997,11 @@ def evaluate_setcomp(
 
 
 def evaluate_try(
-        try_node: ast.Try,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    try_node: ast.Try,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> None:
     try:
         for stmt in try_node.body:
@@ -1032,8 +1010,8 @@ def evaluate_try(
         matched = False
         for handler in try_node.handlers:
             if handler.type is None or isinstance(
-                    e,
-                    evaluate_ast(handler.type, state, static_tools, custom_tools, authorized_imports),
+                e,
+                evaluate_ast(handler.type, state, static_tools, custom_tools, authorized_imports),
             ):
                 matched = True
                 if handler.name:
@@ -1054,11 +1032,11 @@ def evaluate_try(
 
 
 def evaluate_raise(
-        raise_node: ast.Raise,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    raise_node: ast.Raise,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> None:
     if raise_node.exc is not None:
         exc = evaluate_ast(raise_node.exc, state, static_tools, custom_tools, authorized_imports)
@@ -1078,11 +1056,11 @@ def evaluate_raise(
 
 
 def evaluate_assert(
-        assert_node: ast.Assert,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    assert_node: ast.Assert,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> None:
     test_result = evaluate_ast(assert_node.test, state, static_tools, custom_tools, authorized_imports)
     if not test_result:
@@ -1096,11 +1074,11 @@ def evaluate_assert(
 
 
 def evaluate_with(
-        with_node: ast.With,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    with_node: ast.With,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> None:
     contexts = []
     for item in with_node.items:
@@ -1199,11 +1177,11 @@ def evaluate_import(expression, state, authorized_imports):
 
 
 def evaluate_dictcomp(
-        dictcomp: ast.DictComp,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    dictcomp: ast.DictComp,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> dict[Any, Any]:
     result = {}
     for gen in dictcomp.generators:
@@ -1219,8 +1197,8 @@ def evaluate_dictcomp(
                 authorized_imports,
             )
             if all(
-                    evaluate_ast(if_clause, new_state, static_tools, custom_tools, authorized_imports)
-                    for if_clause in gen.ifs
+                evaluate_ast(if_clause, new_state, static_tools, custom_tools, authorized_imports)
+                for if_clause in gen.ifs
             ):
                 key = evaluate_ast(
                     dictcomp.key,
@@ -1241,11 +1219,11 @@ def evaluate_dictcomp(
 
 
 def evaluate_delete(
-        delete_node: ast.Delete,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str],
+    delete_node: ast.Delete,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str],
 ) -> None:
     """
     Evaluate a delete statement (del x, del x[y]).
@@ -1277,12 +1255,12 @@ def evaluate_delete(
 
 
 @safer_eval
-async def evaluate_ast(
-        expression: ast.AST,
-        state: dict[str, Any],
-        static_tools: dict[str, Callable],
-        custom_tools: dict[str, Callable],
-        authorized_imports: list[str] = BASE_BUILTIN_MODULES,
+def evaluate_ast(
+    expression: ast.AST,
+    state: dict[str, Any],
+    static_tools: dict[str, Callable],
+    custom_tools: dict[str, Callable],
+    authorized_imports: list[str] = BASE_BUILTIN_MODULES,
 ):
     """
     Evaluate an abstract syntax tree using the content of the variables stored in a state and only evaluating a given
@@ -1313,172 +1291,118 @@ async def evaluate_ast(
     if isinstance(expression, ast.Assign):
         # Assignment -> we evaluate the assignment which should update the state
         # We return the variable assigned as it may be used to determine the final result.
-        return await evaluate_assign(expression, *common_params)
+        return evaluate_assign(expression, *common_params)
     elif isinstance(expression, ast.AnnAssign):
-        return await evaluate_annassign(expression, *common_params)
+        return evaluate_annassign(expression, *common_params)
     elif isinstance(expression, ast.AugAssign):
-        return await evaluate_augassign(expression, *common_params)
+        return evaluate_augassign(expression, *common_params)
     elif isinstance(expression, ast.Call):
         # Function call -> we return the value of the function call
-        return await evaluate_call(expression, *common_params)
+        return evaluate_call(expression, *common_params)
     elif isinstance(expression, ast.Constant):
         # Constant -> just return the value
         return expression.value
     elif isinstance(expression, ast.Tuple):
-        return tuple((await evaluate_ast(elt, *common_params) for elt in expression.elts))
+        return tuple((evaluate_ast(elt, *common_params) for elt in expression.elts))
     elif isinstance(expression, (ast.ListComp, ast.GeneratorExp)):
-        return await evaluate_listcomp(expression, *common_params)
+        return evaluate_listcomp(expression, *common_params)
     elif isinstance(expression, ast.DictComp):
-        return await evaluate_dictcomp(expression, *common_params)
+        return evaluate_dictcomp(expression, *common_params)
     elif isinstance(expression, ast.SetComp):
-        return await evaluate_setcomp(expression, *common_params)
+        return evaluate_setcomp(expression, *common_params)
     elif isinstance(expression, ast.UnaryOp):
-        return await evaluate_unaryop(expression, *common_params)
+        return evaluate_unaryop(expression, *common_params)
     elif isinstance(expression, ast.Starred):
-        return await evaluate_ast(expression.value, *common_params)
+        return evaluate_ast(expression.value, *common_params)
     elif isinstance(expression, ast.BoolOp):
         # Boolean operation -> evaluate the operation
-        return await evaluate_boolop(expression, *common_params)
+        return evaluate_boolop(expression, *common_params)
     elif isinstance(expression, ast.Break):
         raise BreakException()
     elif isinstance(expression, ast.Continue):
         raise ContinueException()
     elif isinstance(expression, ast.BinOp):
         # Binary operation -> execute operation
-        return await evaluate_binop(expression, *common_params)
+        return evaluate_binop(expression, *common_params)
     elif isinstance(expression, ast.Compare):
         # Comparison -> evaluate the comparison
-        return await evaluate_condition(expression, *common_params)
+        return evaluate_condition(expression, *common_params)
     elif isinstance(expression, ast.Lambda):
-        return await evaluate_lambda(expression, *common_params)
+        return evaluate_lambda(expression, *common_params)
     elif isinstance(expression, ast.FunctionDef):
-        return await evaluate_function_def(expression, *common_params)
-    elif isinstance(expression, ast.AsyncFunctionDef):
-        # Treat async function definitions the same as normal functions
-        return await evaluate_function_def(expression, *common_params)
+        return evaluate_function_def(expression, *common_params)
     elif isinstance(expression, ast.Dict):
         # Dict -> evaluate all keys and values
-        keys = (await evaluate_ast(k, *common_params) for k in expression.keys)
-        values = (await evaluate_ast(v, *common_params) for v in expression.values)
+        keys = (evaluate_ast(k, *common_params) for k in expression.keys)
+        values = (evaluate_ast(v, *common_params) for v in expression.values)
         return dict(zip(keys, values))
     elif isinstance(expression, ast.Expr):
         # Expression -> evaluate the content
-        return await evaluate_ast(expression.value, *common_params)
+        return evaluate_ast(expression.value, *common_params)
     elif isinstance(expression, ast.For):
         # For loop -> execute the loop
-        return await evaluate_for(expression, *common_params)
-    elif isinstance(expression, ast.AsyncFor):
-        result = None
-        async_iter = await evaluate_ast(expression.iter, *common_params)
-        if inspect.isasyncgen(async_iter) or inspect.iscoroutine(async_iter):
-            iter_values = run_async_as_sync(async_iter)
-        else:
-            iter_values = async_iter
-        for item in iter_values:
-            set_value(expression.target, item, *common_params)
-            for stmt in expression.body:
-                try:
-                    line_result = await evaluate_ast(stmt, *common_params)
-                    if line_result is not None:
-                        result = line_result
-                except BreakException:
-                    break
-                except ContinueException:
-                    continue
-            else:
-                continue
-            break
-        return result
+        return evaluate_for(expression, *common_params)
     elif isinstance(expression, ast.FormattedValue):
         # Formatted value (part of f-string) -> evaluate the content and format it
-        value = await evaluate_ast(expression.value, *common_params)
+        value = evaluate_ast(expression.value, *common_params)
         # Early return if no format spec
         if not expression.format_spec:
             return value
         # Apply format specification
-        format_spec = await evaluate_ast(expression.format_spec, *common_params)
+        format_spec = evaluate_ast(expression.format_spec, *common_params)
         return format(value, format_spec)
     elif isinstance(expression, ast.If):
         # If -> execute the right branch
-        return await evaluate_if(expression, *common_params)
+        return evaluate_if(expression, *common_params)
     elif hasattr(ast, "Index") and isinstance(expression, ast.Index):
-        return await evaluate_ast(expression.value, *common_params)
+        return evaluate_ast(expression.value, *common_params)
     elif isinstance(expression, ast.JoinedStr):
-        return "".join([str(await evaluate_ast(v, *common_params)) for v in expression.values])
+        return "".join([str(evaluate_ast(v, *common_params)) for v in expression.values])
     elif isinstance(expression, ast.List):
         # List -> evaluate all elements
-        return [await evaluate_ast(elt, *common_params) for elt in expression.elts]
+        return [evaluate_ast(elt, *common_params) for elt in expression.elts]
     elif isinstance(expression, ast.Name):
         # Name -> pick up the value in the state
-        return await evaluate_name(expression, *common_params)
+        return evaluate_name(expression, *common_params)
     elif isinstance(expression, ast.Subscript):
         # Subscript -> return the value of the indexing
-        return await evaluate_subscript(expression, *common_params)
+        return evaluate_subscript(expression, *common_params)
     elif isinstance(expression, ast.IfExp):
-        test_val = await evaluate_ast(expression.test, *common_params)
+        test_val = evaluate_ast(expression.test, *common_params)
         if test_val:
-            return await evaluate_ast(expression.body, *common_params)
+            return evaluate_ast(expression.body, *common_params)
         else:
-            return await evaluate_ast(expression.orelse, *common_params)
+            return evaluate_ast(expression.orelse, *common_params)
     elif isinstance(expression, ast.Attribute):
-        return await evaluate_attribute(expression, *common_params)
-    elif isinstance(expression, ast.Await):
-        awaited = await evaluate_ast(expression.value, *common_params)
-        if inspect.iscoroutine(awaited) or inspect.isawaitable(awaited):
-            return await awaited
-        else:
-            return awaited
+        return evaluate_attribute(expression, *common_params)
     elif isinstance(expression, ast.Slice):
         return slice(
-            await evaluate_ast(expression.lower, *common_params) if expression.lower is not None else None,
-            await evaluate_ast(expression.upper, *common_params) if expression.upper is not None else None,
-            await evaluate_ast(expression.step, *common_params) if expression.step is not None else None,
+            evaluate_ast(expression.lower, *common_params) if expression.lower is not None else None,
+            evaluate_ast(expression.upper, *common_params) if expression.upper is not None else None,
+            evaluate_ast(expression.step, *common_params) if expression.step is not None else None,
         )
     elif isinstance(expression, ast.While):
-        return await evaluate_while(expression, *common_params)
+        return evaluate_while(expression, *common_params)
     elif isinstance(expression, (ast.Import, ast.ImportFrom)):
-        return await evaluate_import(expression, state, authorized_imports)
+        return evaluate_import(expression, state, authorized_imports)
     elif isinstance(expression, ast.ClassDef):
-        return await evaluate_class_def(expression, *common_params)
+        return evaluate_class_def(expression, *common_params)
     elif isinstance(expression, ast.Try):
-        return await evaluate_try(expression, *common_params)
+        return evaluate_try(expression, *common_params)
     elif isinstance(expression, ast.Raise):
-        return await evaluate_raise(expression, *common_params)
+        return evaluate_raise(expression, *common_params)
     elif isinstance(expression, ast.Assert):
-        return await evaluate_assert(expression, *common_params)
+        return evaluate_assert(expression, *common_params)
     elif isinstance(expression, ast.With):
-        return await evaluate_with(expression, *common_params)
-    elif isinstance(expression, ast.AsyncWith):
-        contexts = []
-        for item in expression.items:
-            context_expr = await evaluate_ast(item.context_expr, *common_params)
-            if item.optional_vars:
-                entered = run_async_as_sync(context_expr.__aenter__())
-                state[item.optional_vars.id] = entered
-                contexts.append((context_expr, entered))
-            else:
-                entered = run_async_as_sync(context_expr.__aenter__())
-                contexts.append((context_expr, entered))
-
-        try:
-            for stmt in expression.body:
-                await evaluate_ast(stmt, *common_params)
-        except Exception as e:
-            for ctx, _ in reversed(contexts):
-                run_async_as_sync(ctx.__aexit__(type(e), e, e.__traceback__))
-            raise
-        else:
-            for ctx, _ in reversed(contexts):
-                run_async_as_sync(ctx.__aexit__(None, None, None))
-        return None
+        return evaluate_with(expression, *common_params)
     elif isinstance(expression, ast.Set):
-        return set((await evaluate_ast(elt, *common_params) for elt in expression.elts))
+        return set((evaluate_ast(elt, *common_params) for elt in expression.elts))
     elif isinstance(expression, ast.Return):
-        raise ReturnException(await evaluate_ast(expression.value, *common_params) if expression.value else None)
+        raise ReturnException(evaluate_ast(expression.value, *common_params) if expression.value else None)
     elif isinstance(expression, ast.Pass):
         return None
     elif isinstance(expression, ast.Delete):
-        return await evaluate_delete(expression, *common_params)
+        return evaluate_delete(expression, *common_params)
     else:
         # For now we refuse anything else. Let's add things as we need them.
         raise InterpreterError(f"{expression.__class__.__name__} is not supported.")
@@ -1489,13 +1413,13 @@ class FinalAnswerException(Exception):
         self.value = value
 
 
-async def evaluate_python_code(
-        code: str,
-        static_tools: dict[str, Callable] | None = None,
-        custom_tools: dict[str, Callable] | None = None,
-        state: dict[str, Any] | None = None,
-        authorized_imports: list[str] = BASE_BUILTIN_MODULES,
-        max_print_outputs_length: int = DEFAULT_MAX_LEN_OUTPUT,
+def evaluate_python_code(
+    code: str,
+    static_tools: dict[str, Callable] | None = None,
+    custom_tools: dict[str, Callable] | None = None,
+    state: dict[str, Any] | None = None,
+    authorized_imports: list[str] = BASE_BUILTIN_MODULES,
+    max_print_outputs_length: int = DEFAULT_MAX_LEN_OUTPUT,
 ):
     """
     Evaluate a python expression using the content of the variables stored in a state and only evaluating a given set
@@ -1545,7 +1469,7 @@ async def evaluate_python_code(
 
     try:
         for node in expression.body:
-            result = await evaluate_ast(node, state, static_tools, custom_tools, authorized_imports)
+            result = evaluate_ast(node, state, static_tools, custom_tools, authorized_imports)
         state["_print_outputs"].value = truncate_content(
             str(state["_print_outputs"]), max_length=max_print_outputs_length
         )
@@ -1589,10 +1513,10 @@ class LocalPythonExecutor(PythonExecutor):
     """
 
     def __init__(
-            self,
-            additional_authorized_imports: list[str],
-            max_print_outputs_length: int | None = None,
-            additional_functions: dict[str, Callable] | None = None,
+        self,
+        additional_authorized_imports: list[str],
+        max_print_outputs_length: int | None = None,
+        additional_functions: dict[str, Callable] | None = None,
     ):
         self.custom_tools = {}
         self.state = {"__name__": "__main__"}
@@ -1606,13 +1530,14 @@ class LocalPythonExecutor(PythonExecutor):
         self.additional_functions = additional_functions or {}
 
     async def __call__(self, code_action: str) -> tuple[Any, str, bool]:
-        output, is_final_answer = await evaluate_python_code(
-            code_action,
-            static_tools=self.static_tools,
-            custom_tools=self.custom_tools,
-            state=self.state,
-            authorized_imports=self.authorized_imports,
-            max_print_outputs_length=self.max_print_outputs_length,
+        output, is_final_answer = await asyncio.to_thread(
+                evaluate_python_code,
+                code_action,
+                static_tools=self.static_tools,
+                custom_tools=self.custom_tools,
+                state=self.state,
+                authorized_imports=self.authorized_imports,
+                max_print_outputs_length=self.max_print_outputs_length,
         )
         logs = str(self.state["_print_outputs"])
         return output, logs, is_final_answer

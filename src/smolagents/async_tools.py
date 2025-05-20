@@ -606,7 +606,7 @@ class AsyncTool:
                     arg = handle_file(arg)
                 return arg
 
-            def forward(self, *args, **kwargs):
+            async def forward(self, *args, **kwargs):
                 # Preprocess args and kwargs:
                 args = list(args)
                 for i, arg in enumerate(args):
@@ -939,7 +939,7 @@ class AsyncPipelineTool(AsyncTool):
         """
         return self.pre_processor(raw_inputs)
 
-    def forward(self, inputs):
+    async def forward(self, inputs):
         """
         Sends the inputs through the `model`.
         """
@@ -954,7 +954,7 @@ class AsyncPipelineTool(AsyncTool):
         """
         return self.post_processor(outputs)
 
-    def __call__(self, *args, sanitize_inputs_outputs: bool = False, **kwargs):
+    async def __call__(self, *args, sanitize_inputs_outputs: bool = False, **kwargs):
         import torch
         from accelerate.utils import send_to_device
 
@@ -969,7 +969,7 @@ class AsyncPipelineTool(AsyncTool):
         non_tensor_inputs = {k: v for k, v in encoded_inputs.items() if not isinstance(v, torch.Tensor)}
 
         encoded_inputs = send_to_device(tensor_inputs, self.device)
-        outputs = self.forward({**encoded_inputs, **non_tensor_inputs})
+        outputs = await self.forward({**encoded_inputs, **non_tensor_inputs})
         outputs = send_to_device(outputs, "cpu")
         decoded_outputs = self.decode(outputs)
         if sanitize_inputs_outputs:
