@@ -1530,6 +1530,7 @@ class LocalPythonExecutor(PythonExecutor):
         self.additional_functions = additional_functions or {}
 
     async def __call__(self, code_action: str) -> tuple[Any, str, bool]:
+        logger.debug("Recieved code to execute: {}".format(code_action))
         output, is_final_answer = await asyncio.to_thread(
                 evaluate_python_code,
                 code_action,
@@ -1539,6 +1540,7 @@ class LocalPythonExecutor(PythonExecutor):
                 authorized_imports=self.authorized_imports,
                 max_print_outputs_length=self.max_print_outputs_length,
         )
+
         logs = str(self.state["_print_outputs"])
         return output, logs, is_final_answer
 
