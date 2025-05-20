@@ -1277,7 +1277,7 @@ def evaluate_delete(
 
 
 @safer_eval
-def evaluate_ast(
+async def evaluate_ast(
         expression: ast.AST,
         state: dict[str, Any],
         static_tools: dict[str, Callable],
@@ -1313,63 +1313,63 @@ def evaluate_ast(
     if isinstance(expression, ast.Assign):
         # Assignment -> we evaluate the assignment which should update the state
         # We return the variable assigned as it may be used to determine the final result.
-        return evaluate_assign(expression, *common_params)
+        return await evaluate_assign(expression, *common_params)
     elif isinstance(expression, ast.AnnAssign):
-        return evaluate_annassign(expression, *common_params)
+        return await evaluate_annassign(expression, *common_params)
     elif isinstance(expression, ast.AugAssign):
-        return evaluate_augassign(expression, *common_params)
+        return await evaluate_augassign(expression, *common_params)
     elif isinstance(expression, ast.Call):
         # Function call -> we return the value of the function call
-        return evaluate_call(expression, *common_params)
+        return await evaluate_call(expression, *common_params)
     elif isinstance(expression, ast.Constant):
         # Constant -> just return the value
         return expression.value
     elif isinstance(expression, ast.Tuple):
-        return tuple((evaluate_ast(elt, *common_params) for elt in expression.elts))
+        return tuple((await evaluate_ast(elt, *common_params) for elt in expression.elts))
     elif isinstance(expression, (ast.ListComp, ast.GeneratorExp)):
-        return evaluate_listcomp(expression, *common_params)
+        return await evaluate_listcomp(expression, *common_params)
     elif isinstance(expression, ast.DictComp):
-        return evaluate_dictcomp(expression, *common_params)
+        return await evaluate_dictcomp(expression, *common_params)
     elif isinstance(expression, ast.SetComp):
-        return evaluate_setcomp(expression, *common_params)
+        return await evaluate_setcomp(expression, *common_params)
     elif isinstance(expression, ast.UnaryOp):
-        return evaluate_unaryop(expression, *common_params)
+        return await evaluate_unaryop(expression, *common_params)
     elif isinstance(expression, ast.Starred):
-        return evaluate_ast(expression.value, *common_params)
+        return await evaluate_ast(expression.value, *common_params)
     elif isinstance(expression, ast.BoolOp):
         # Boolean operation -> evaluate the operation
-        return evaluate_boolop(expression, *common_params)
+        return await evaluate_boolop(expression, *common_params)
     elif isinstance(expression, ast.Break):
         raise BreakException()
     elif isinstance(expression, ast.Continue):
         raise ContinueException()
     elif isinstance(expression, ast.BinOp):
         # Binary operation -> execute operation
-        return evaluate_binop(expression, *common_params)
+        return await evaluate_binop(expression, *common_params)
     elif isinstance(expression, ast.Compare):
         # Comparison -> evaluate the comparison
-        return evaluate_condition(expression, *common_params)
+        return await evaluate_condition(expression, *common_params)
     elif isinstance(expression, ast.Lambda):
-        return evaluate_lambda(expression, *common_params)
+        return await evaluate_lambda(expression, *common_params)
     elif isinstance(expression, ast.FunctionDef):
-        return evaluate_function_def(expression, *common_params)
+        return await evaluate_function_def(expression, *common_params)
     elif isinstance(expression, ast.AsyncFunctionDef):
         # Treat async function definitions the same as normal functions
-        return evaluate_function_def(expression, *common_params)
+        return await evaluate_function_def(expression, *common_params)
     elif isinstance(expression, ast.Dict):
         # Dict -> evaluate all keys and values
-        keys = (evaluate_ast(k, *common_params) for k in expression.keys)
-        values = (evaluate_ast(v, *common_params) for v in expression.values)
+        keys = (await evaluate_ast(k, *common_params) for k in expression.keys)
+        values = (await evaluate_ast(v, *common_params) for v in expression.values)
         return dict(zip(keys, values))
     elif isinstance(expression, ast.Expr):
         # Expression -> evaluate the content
-        return evaluate_ast(expression.value, *common_params)
+        return await evaluate_ast(expression.value, *common_params)
     elif isinstance(expression, ast.For):
         # For loop -> execute the loop
-        return evaluate_for(expression, *common_params)
+        return await evaluate_for(expression, *common_params)
     elif isinstance(expression, ast.AsyncFor):
         result = None
-        async_iter = evaluate_ast(expression.iter, *common_params)
+        async_iter = await evaluate_ast(expression.iter, *common_params)
         if inspect.isasyncgen(async_iter) or inspect.iscoroutine(async_iter):
             iter_values = run_async_as_sync(async_iter)
         else:
@@ -1378,7 +1378,7 @@ def evaluate_ast(
             set_value(expression.target, item, *common_params)
             for stmt in expression.body:
                 try:
-                    line_result = evaluate_ast(stmt, *common_params)
+                    line_result = await evaluate_ast(stmt, *common_params)
                     if line_result is not None:
                         result = line_result
                 except BreakException:
@@ -1391,67 +1391,67 @@ def evaluate_ast(
         return result
     elif isinstance(expression, ast.FormattedValue):
         # Formatted value (part of f-string) -> evaluate the content and format it
-        value = evaluate_ast(expression.value, *common_params)
+        value = await evaluate_ast(expression.value, *common_params)
         # Early return if no format spec
         if not expression.format_spec:
             return value
         # Apply format specification
-        format_spec = evaluate_ast(expression.format_spec, *common_params)
+        format_spec = await evaluate_ast(expression.format_spec, *common_params)
         return format(value, format_spec)
     elif isinstance(expression, ast.If):
         # If -> execute the right branch
-        return evaluate_if(expression, *common_params)
+        return await evaluate_if(expression, *common_params)
     elif hasattr(ast, "Index") and isinstance(expression, ast.Index):
-        return evaluate_ast(expression.value, *common_params)
+        return await evaluate_ast(expression.value, *common_params)
     elif isinstance(expression, ast.JoinedStr):
-        return "".join([str(evaluate_ast(v, *common_params)) for v in expression.values])
+        return "".join([str(await evaluate_ast(v, *common_params)) for v in expression.values])
     elif isinstance(expression, ast.List):
         # List -> evaluate all elements
-        return [evaluate_ast(elt, *common_params) for elt in expression.elts]
+        return [await evaluate_ast(elt, *common_params) for elt in expression.elts]
     elif isinstance(expression, ast.Name):
         # Name -> pick up the value in the state
-        return evaluate_name(expression, *common_params)
+        return await evaluate_name(expression, *common_params)
     elif isinstance(expression, ast.Subscript):
         # Subscript -> return the value of the indexing
-        return evaluate_subscript(expression, *common_params)
+        return await evaluate_subscript(expression, *common_params)
     elif isinstance(expression, ast.IfExp):
-        test_val = evaluate_ast(expression.test, *common_params)
+        test_val = await evaluate_ast(expression.test, *common_params)
         if test_val:
-            return evaluate_ast(expression.body, *common_params)
+            return await evaluate_ast(expression.body, *common_params)
         else:
-            return evaluate_ast(expression.orelse, *common_params)
+            return await evaluate_ast(expression.orelse, *common_params)
     elif isinstance(expression, ast.Attribute):
-        return evaluate_attribute(expression, *common_params)
+        return await evaluate_attribute(expression, *common_params)
     elif isinstance(expression, ast.Await):
-        awaited = evaluate_ast(expression.value, *common_params)
+        awaited = await evaluate_ast(expression.value, *common_params)
         if inspect.iscoroutine(awaited):
-            return run_async_as_sync(awaited)
+            return asyncio.ensure_future(awaited)
         else:
             return awaited
     elif isinstance(expression, ast.Slice):
         return slice(
-            evaluate_ast(expression.lower, *common_params) if expression.lower is not None else None,
-            evaluate_ast(expression.upper, *common_params) if expression.upper is not None else None,
-            evaluate_ast(expression.step, *common_params) if expression.step is not None else None,
+            await evaluate_ast(expression.lower, *common_params) if expression.lower is not None else None,
+            await evaluate_ast(expression.upper, *common_params) if expression.upper is not None else None,
+            await evaluate_ast(expression.step, *common_params) if expression.step is not None else None,
         )
     elif isinstance(expression, ast.While):
-        return evaluate_while(expression, *common_params)
+        return await evaluate_while(expression, *common_params)
     elif isinstance(expression, (ast.Import, ast.ImportFrom)):
-        return evaluate_import(expression, state, authorized_imports)
+        return await evaluate_import(expression, state, authorized_imports)
     elif isinstance(expression, ast.ClassDef):
-        return evaluate_class_def(expression, *common_params)
+        return await evaluate_class_def(expression, *common_params)
     elif isinstance(expression, ast.Try):
-        return evaluate_try(expression, *common_params)
+        return await evaluate_try(expression, *common_params)
     elif isinstance(expression, ast.Raise):
-        return evaluate_raise(expression, *common_params)
+        return await evaluate_raise(expression, *common_params)
     elif isinstance(expression, ast.Assert):
-        return evaluate_assert(expression, *common_params)
+        return await evaluate_assert(expression, *common_params)
     elif isinstance(expression, ast.With):
-        return evaluate_with(expression, *common_params)
+        return await evaluate_with(expression, *common_params)
     elif isinstance(expression, ast.AsyncWith):
         contexts = []
         for item in expression.items:
-            context_expr = evaluate_ast(item.context_expr, *common_params)
+            context_expr = await evaluate_ast(item.context_expr, *common_params)
             if item.optional_vars:
                 entered = run_async_as_sync(context_expr.__aenter__())
                 state[item.optional_vars.id] = entered
@@ -1462,7 +1462,7 @@ def evaluate_ast(
 
         try:
             for stmt in expression.body:
-                evaluate_ast(stmt, *common_params)
+                await evaluate_ast(stmt, *common_params)
         except Exception as e:
             for ctx, _ in reversed(contexts):
                 run_async_as_sync(ctx.__aexit__(type(e), e, e.__traceback__))
@@ -1472,13 +1472,13 @@ def evaluate_ast(
                 run_async_as_sync(ctx.__aexit__(None, None, None))
         return None
     elif isinstance(expression, ast.Set):
-        return set((evaluate_ast(elt, *common_params) for elt in expression.elts))
+        return set((await evaluate_ast(elt, *common_params) for elt in expression.elts))
     elif isinstance(expression, ast.Return):
-        raise ReturnException(evaluate_ast(expression.value, *common_params) if expression.value else None)
+        raise ReturnException(await evaluate_ast(expression.value, *common_params) if expression.value else None)
     elif isinstance(expression, ast.Pass):
         return None
     elif isinstance(expression, ast.Delete):
-        return evaluate_delete(expression, *common_params)
+        return await evaluate_delete(expression, *common_params)
     else:
         # For now we refuse anything else. Let's add things as we need them.
         raise InterpreterError(f"{expression.__class__.__name__} is not supported.")
@@ -1489,7 +1489,7 @@ class FinalAnswerException(Exception):
         self.value = value
 
 
-def evaluate_python_code(
+async def evaluate_python_code(
         code: str,
         static_tools: dict[str, Callable] | None = None,
         custom_tools: dict[str, Callable] | None = None,
@@ -1545,7 +1545,7 @@ def evaluate_python_code(
 
     try:
         for node in expression.body:
-            result = evaluate_ast(node, state, static_tools, custom_tools, authorized_imports)
+            result = await evaluate_ast(node, state, static_tools, custom_tools, authorized_imports)
         state["_print_outputs"].value = truncate_content(
             str(state["_print_outputs"]), max_length=max_print_outputs_length
         )
@@ -1605,8 +1605,8 @@ class LocalPythonExecutor(PythonExecutor):
         self.static_tools = None
         self.additional_functions = additional_functions or {}
 
-    def __call__(self, code_action: str) -> tuple[Any, str, bool]:
-        output, is_final_answer = evaluate_python_code(
+    async def __call__(self, code_action: str) -> tuple[Any, str, bool]:
+        output, is_final_answer = await evaluate_python_code(
             code_action,
             static_tools=self.static_tools,
             custom_tools=self.custom_tools,
