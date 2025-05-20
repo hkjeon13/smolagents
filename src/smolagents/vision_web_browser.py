@@ -2,17 +2,15 @@ import argparse
 from io import BytesIO
 from time import sleep
 
-import helium
 import PIL.Image
+import helium
 from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-
 from smolagents import CodeAgent, WebSearchTool, tool
 from smolagents.agents import ActionStep
 from smolagents.cli import load_model
-
 
 github_request = """
 I'm trying to find how hard I have to work to get a repo in github.com/trending.

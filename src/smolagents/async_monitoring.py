@@ -1,24 +1,11 @@
-
-#!/usr/bin/env python
+# !/usr/bin/env python
 # coding=utf-8
 
-import asyncio
-import json
 from enum import IntEnum
-from typing import List, Optional
 
-from rich import box
-from rich.console import Console, Group
-from rich.panel import Panel
-from rich.rule import Rule
-from rich.syntax import Syntax
-from rich.table import Table
 from rich.text import Text
-from rich.tree import Tree
-from .utils import escape_code_brackets
 
 __all__ = ["LogLevel", "AsyncMonitor"]
-
 
 YELLOW_HEX = "#d4b702"
 
@@ -28,7 +15,6 @@ class LogLevel(IntEnum):
     ERROR = 0  # Only errors
     INFO = 1  # Normal output (default)
     DEBUG = 2  # Detailed output
-
 
 
 class AsyncMonitor:

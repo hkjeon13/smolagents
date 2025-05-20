@@ -53,9 +53,9 @@ This tool handles the following file extensions: [".html", ".htm", ".xlsx", ".pp
                     {
                         "type": "text",
                         "text": "Here is a file:\n### "
-                        + str(result.title)
-                        + "\n\n"
-                        + result.text_content[: self.text_limit],
+                                + str(result.title)
+                                + "\n\n"
+                                + result.text_content[: self.text_limit],
                     }
                 ],
             },
@@ -65,8 +65,8 @@ This tool handles the following file extensions: [".html", ".htm", ".xlsx", ".pp
                     {
                         "type": "text",
                         "text": "Now please write a short, 5 sentence caption for this document, that could help someone asking this question: "
-                        + question
-                        + "\n\nDon't answer the question yourself! Just provide useful notes on the document",
+                                + question
+                                + "\n\nDon't answer the question yourself! Just provide useful notes on the document",
                     }
                 ],
             },
@@ -94,7 +94,7 @@ This tool handles the following file extensions: [".html", ".htm", ".xlsx", ".pp
                     {
                         "type": "text",
                         "text": "You will have to write a short caption for this file, then answer this question:"
-                        + question,
+                                + question,
                     }
                 ],
             },
@@ -104,9 +104,9 @@ This tool handles the following file extensions: [".html", ".htm", ".xlsx", ".pp
                     {
                         "type": "text",
                         "text": "Here is the complete file:\n### "
-                        + str(result.title)
-                        + "\n\n"
-                        + result.text_content[: self.text_limit],
+                                + str(result.title)
+                                + "\n\n"
+                                + result.text_content[: self.text_limit],
                     }
                 ],
             },
@@ -116,7 +116,7 @@ This tool handles the following file extensions: [".html", ".htm", ".xlsx", ".pp
                     {
                         "type": "text",
                         "text": "Now answer the question below. Use these three headings: '1. Short answer', '2. Extremely detailed answer', '3. Additional Context on the document and question asked'."
-                        + question,
+                                + question,
                     }
                 ],
             },

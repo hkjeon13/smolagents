@@ -1,29 +1,21 @@
 import importlib
 import inspect
 import json
-import os
-import re
-import tempfile
 import textwrap
 import time
-from abc import ABC, abstractmethod
-from collections.abc import Callable, Generator, AsyncGenerator
+from abc import ABC
+from collections.abc import Callable, AsyncGenerator
 from inspect import iscoroutine
 from logging import getLogger
-from pathlib import Path
-from typing import TYPE_CHECKING, Any, TypedDict
+from typing import TYPE_CHECKING, Any
 
-import jinja2
 import yaml
-from huggingface_hub import create_repo, metadata_update, snapshot_download, upload_folder
-from jinja2 import StrictUndefined, Template
 from rich.console import Group
 from rich.live import Live
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.rule import Rule
 from rich.text import Text
-
 
 if TYPE_CHECKING:
     import PIL.Image
@@ -35,7 +27,6 @@ from .memory import (
     ActionStep,
     AgentMemory,
     FinalAnswerStep,
-    Message,
     PlanningStep,
     SystemPromptStep,
     TaskStep,
@@ -58,13 +49,12 @@ from .utils import (
     AgentParsingError,
     AgentToolCallError,
     AgentToolExecutionError,
-    is_valid_name,
-    make_init_file,
     parse_code_blobs,
     truncate_content,
 )
 from .agents import PromptTemplates, EMPTY_PROMPT_TEMPLATES, MultiStepAgent, populate_template
 from .async_monitoring import AsyncMonitor
+
 logger = getLogger(__name__)
 
 
@@ -72,7 +62,7 @@ class AsyncMultiStepAgentBase:
     def __init__(
             self,
             tools: list[AsyncTool],
-            model: AsyncModel ,
+            model: AsyncModel,
             prompt_templates: PromptTemplates | None = None,
             max_steps: int = 20,
             add_base_tools: bool = False,
@@ -90,18 +80,18 @@ class AsyncMultiStepAgentBase:
         raise NotImplementedError
 
     async def run(
-        self,
-        task: str,
-        stream: bool = False,
-        reset: bool = True,
-        images: list["PIL.Image.Image"] | None = None,
-        additional_args: dict | None = None,
-        max_steps: int | None = None,
+            self,
+            task: str,
+            stream: bool = False,
+            reset: bool = True,
+            images: list["PIL.Image.Image"] | None = None,
+            additional_args: dict | None = None,
+            max_steps: int | None = None,
     ):
         raise NotImplementedError
 
     async def _run_stream(
-        self, task: str, max_steps: int, images: list["PIL.Image.Image"] | None = None
+            self, task: str, max_steps: int, images: list["PIL.Image.Image"] | None = None
     ) -> AsyncGenerator[ActionStep | PlanningStep | FinalAnswerStep]:
         raise NotImplementedError
 
@@ -111,9 +101,9 @@ class AsyncMultiStepAgentBase:
     async def _finalize_step(self, memory_step: ActionStep, step_start_time: float):
         raise NotImplementedError
 
-    async def _handle_max_steps_reached(self, task: str, images: list["PIL.Image.Image"], step_start_time: float) -> Any:
+    async def _handle_max_steps_reached(self, task: str, images: list["PIL.Image.Image"],
+                                        step_start_time: float) -> Any:
         raise NotImplementedError
-
 
     async def _generate_planning_step(
             self, task, is_first_step: bool, step: int
@@ -136,7 +126,7 @@ class AsyncMultiStepAgentBase:
         """
         raise NotImplementedError
 
-    async def __call__(self, task:str, **kwargs) -> str:
+    async def __call__(self, task: str, **kwargs) -> str:
         """
         Call the agent with a task and return the final answer.
         """
@@ -151,22 +141,22 @@ class AsyncMultiStepAgentBase:
 
 class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
     def __init__(
-        self,
-        tools: list[AsyncTool],
-        model: AsyncModel , #TODO: Change to the AsyncModel
-        prompt_templates: PromptTemplates | None = None,
-        max_steps: int = 20,
-        add_base_tools: bool = False,
-        verbosity_level: LogLevel = LogLevel.INFO,
-        grammar: dict[str, str] | None = None,
-        managed_agents: list | None = None,
-        step_callbacks: list[Callable] | None = None,
-        planning_interval: int | None = None,
-        name: str | None = None,
-        description: str | None = None,
-        provide_run_summary: bool = False,
-        final_answer_checks: list[Callable] | None = None,
-        logger: AgentLogger | None = None,
+            self,
+            tools: list[AsyncTool],
+            model: AsyncModel,  # TODO: Change to the AsyncModel
+            prompt_templates: PromptTemplates | None = None,
+            max_steps: int = 20,
+            add_base_tools: bool = False,
+            verbosity_level: LogLevel = LogLevel.INFO,
+            grammar: dict[str, str] | None = None,
+            managed_agents: list | None = None,
+            step_callbacks: list[Callable] | None = None,
+            planning_interval: int | None = None,
+            name: str | None = None,
+            description: str | None = None,
+            provide_run_summary: bool = False,
+            final_answer_checks: list[Callable] | None = None,
+            logger: AgentLogger | None = None,
     ):
         self.agent_name = self.__class__.__name__
         self.model = model
@@ -213,7 +203,8 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
         self.stream_outputs = False
 
     def _setup_tools(self, tools, add_base_tools):
-        assert all(isinstance(tool, AsyncTool) for tool in tools), "All elements must be instance of AsyncTool (or a subclass)"
+        assert all(
+            isinstance(tool, AsyncTool) for tool in tools), "All elements must be instance of AsyncTool (or a subclass)"
 
         self.tools = {tool.name: tool for tool in tools}
         if add_base_tools:
@@ -227,13 +218,13 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
         self.tools.setdefault("final_answer", FinalAnswerTool())
 
     async def run(
-        self,
-        task: str,
-        stream: bool = False,
-        reset: bool = True,
-        images: list["PIL.Image.Image"] | None = None,
-        additional_args: dict | None = None,
-        max_steps: int | None = None,
+            self,
+            task: str,
+            stream: bool = False,
+            reset: bool = True,
+            images: list["PIL.Image.Image"] | None = None,
+            additional_args: dict | None = None,
+            max_steps: int | None = None,
     ):
         """
         Run the agent with the given task and return the final answer.
@@ -264,7 +255,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
 
         if getattr(self, "python_executor", None):
             self.python_executor.send_variables(variables=self.state)
-            #self.python_executor.send_tools({**self.tools, **self.managed_agents})
+            # self.python_executor.send_tools({**self.tools, **self.managed_agents})
             self.python_executor.send_tools({**self.tools, })
 
         if stream:
@@ -278,7 +269,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
         return steps[-1].final_answer
 
     async def _run_stream(
-        self, task: str, max_steps: int, images: list["PIL.Image.Image"] | None = None
+            self, task: str, max_steps: int, images: list["PIL.Image.Image"] | None = None
     ) -> AsyncGenerator[ActionStep | PlanningStep | FinalAnswerStep]:
         """
         Run the agent with the given task and return the final answer.
@@ -325,7 +316,6 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
             yield action_step
         yield FinalAnswerStep(handle_agent_output_types(final_answer))
 
-
     async def _execute_step(self, memory_step: ActionStep) -> AsyncGenerator[Any]:
         self.logger.log_rule(f"Step {self.step_number}", level=LogLevel.INFO)
         final_answer = None
@@ -349,7 +339,8 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
                     memory_step, agent=self
                 )
 
-    async def _handle_max_steps_reached(self, task: str, images: list["PIL.Image.Image"], step_start_time: float) -> Any:
+    async def _handle_max_steps_reached(self, task: str, images: list["PIL.Image.Image"],
+                                        step_start_time: float) -> Any:
         final_answer = await self.provide_final_answer(task, images)
         final_memory_step = ActionStep(
             step_number=self.step_number, error=AgentMaxStepsError("Reached max steps.", self.logger)
@@ -388,7 +379,8 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
             ]
             if self.stream_outputs and hasattr(self.model, "generate_stream"):
                 plan_message_content = ""
-                async for completion_delta in self.model.generate_stream(input_messages, stop_sequences=["<end_plan>"]):  # type: ignore
+                async for completion_delta in self.model.generate_stream(input_messages,
+                                                                         stop_sequences=["<end_plan>"]):  # type: ignore
                     plan_message_content += completion_delta.content
                     yield completion_delta
             else:
@@ -434,7 +426,8 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
             input_messages = [plan_update_pre] + memory_messages + [plan_update_post]
             if self.stream_outputs and hasattr(self.model, "generate_stream"):
                 plan_message_content = ""
-                async for completion_delta in self.model.generate_stream(input_messages, stop_sequences=["<end_plan>"]):  # type: ignore
+                async for completion_delta in self.model.generate_stream(input_messages,
+                                                                         stop_sequences=["<end_plan>"]):  # type: ignore
                     plan_message_content += completion_delta.content
                     yield completion_delta
             else:
@@ -531,6 +524,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
             answer += "\n</summary_of_work>"
         return answer
 
+
 class AsyncToolCallingAgent(AsyncMultiStepAgent):
     def __init__(
             self,
@@ -574,7 +568,6 @@ class AsyncToolCallingAgent(AsyncMultiStepAgent):
         self.executor_type = executor_type or "local"
         self.executor_kwargs = executor_kwargs or {}
         self.python_executor = self.create_python_executor()
-
 
     def initialize_system_prompt(self) -> str:
         system_prompt = populate_template(
@@ -773,12 +766,11 @@ class AsyncToolCallingAgent(AsyncMultiStepAgent):
             raise AgentToolExecutionError(error_msg, self.logger) from e
 
 
-
 class AsyncCodeAgent(AsyncMultiStepAgent):
     def __init__(
             self,
             tools: list[AsyncTool],
-            model: AsyncModel ,
+            model: AsyncModel,
             prompt_templates: PromptTemplates | None = None,
             grammar: dict[str, str] | None = None,
             additional_authorized_imports: list[str] | None = None,
@@ -830,7 +822,6 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
                 )
             case _:  # if applicable
                 raise ValueError(f"Unsupported executor type: {self.executor_type}")
-
 
     def initialize_system_prompt(self) -> str:
         system_prompt = populate_template(

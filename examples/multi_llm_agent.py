@@ -2,7 +2,6 @@ import os
 
 from smolagents import CodeAgent, LiteLLMRouterModel, WebSearchTool
 
-
 # Make sure to setup the necessary environment variables!
 
 llm_loadbalancer_model_list = [
@@ -32,7 +31,6 @@ llm_loadbalancer_model_list = [
     #     },
     # },
 ]
-
 
 model = LiteLLMRouterModel(
     model_id="model-group-1",

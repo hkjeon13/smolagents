@@ -28,7 +28,6 @@ from huggingface_hub import (
     ChatCompletionOutputToolCall,
 )
 from rich.console import Console
-
 from smolagents import EMPTY_PROMPT_TEMPLATES
 from smolagents.agent_types import AgentImage, AgentText
 from smolagents.agents import (
@@ -692,22 +691,23 @@ class TestMultiStepAgent:
         "step, expected_messages_list",
         [
             (
-                1,
-                [
-                    [{"role": MessageRole.USER, "content": [{"type": "text", "text": "INITIAL_PLAN_USER_PROMPT"}]}],
-                ],
+                    1,
+                    [
+                        [{"role": MessageRole.USER, "content": [{"type": "text", "text": "INITIAL_PLAN_USER_PROMPT"}]}],
+                    ],
             ),
             (
-                2,
-                [
+                    2,
                     [
-                        {
-                            "role": MessageRole.SYSTEM,
-                            "content": [{"type": "text", "text": "UPDATE_PLAN_SYSTEM_PROMPT"}],
-                        },
-                        {"role": MessageRole.USER, "content": [{"type": "text", "text": "UPDATE_PLAN_USER_PROMPT"}]},
+                        [
+                            {
+                                "role": MessageRole.SYSTEM,
+                                "content": [{"type": "text", "text": "UPDATE_PLAN_SYSTEM_PROMPT"}],
+                            },
+                            {"role": MessageRole.USER,
+                             "content": [{"type": "text", "text": "UPDATE_PLAN_USER_PROMPT"}]},
+                        ],
                     ],
-                ],
             ),
         ],
     )
@@ -785,28 +785,30 @@ class TestMultiStepAgent:
         "images, expected_messages_list",
         [
             (
-                None,
-                [
+                    None,
                     [
-                        {
-                            "role": MessageRole.SYSTEM,
-                            "content": [{"type": "text", "text": "FINAL_ANSWER_SYSTEM_PROMPT"}],
-                        },
-                        {"role": MessageRole.USER, "content": [{"type": "text", "text": "FINAL_ANSWER_USER_PROMPT"}]},
-                    ]
-                ],
+                        [
+                            {
+                                "role": MessageRole.SYSTEM,
+                                "content": [{"type": "text", "text": "FINAL_ANSWER_SYSTEM_PROMPT"}],
+                            },
+                            {"role": MessageRole.USER,
+                             "content": [{"type": "text", "text": "FINAL_ANSWER_USER_PROMPT"}]},
+                        ]
+                    ],
             ),
             (
-                ["image1.png"],
-                [
+                    ["image1.png"],
                     [
-                        {
-                            "role": MessageRole.SYSTEM,
-                            "content": [{"type": "text", "text": "FINAL_ANSWER_SYSTEM_PROMPT"}, {"type": "image"}],
-                        },
-                        {"role": MessageRole.USER, "content": [{"type": "text", "text": "FINAL_ANSWER_USER_PROMPT"}]},
-                    ]
-                ],
+                        [
+                            {
+                                "role": MessageRole.SYSTEM,
+                                "content": [{"type": "text", "text": "FINAL_ANSWER_SYSTEM_PROMPT"}, {"type": "image"}],
+                            },
+                            {"role": MessageRole.USER,
+                             "content": [{"type": "text", "text": "FINAL_ANSWER_USER_PROMPT"}]},
+                        ]
+                    ],
             ),
         ],
     )
@@ -871,19 +873,19 @@ class TestMultiStepAgent:
         [
             # Valid case: no duplicates
             (
-                [MockTool("tool1"), MockTool("tool2")],
-                [MockAgent("agent1", [MockTool("tool3")])],
-                "test_agent",
-                does_not_raise(),
+                    [MockTool("tool1"), MockTool("tool2")],
+                    [MockAgent("agent1", [MockTool("tool3")])],
+                    "test_agent",
+                    does_not_raise(),
             ),
             # Invalid case: duplicate tool names
             ([MockTool("tool1"), MockTool("tool1")], [], "test_agent", pytest.raises(ValueError)),
             # Invalid case: tool name same as managed agent name
             (
-                [MockTool("tool1")],
-                [MockAgent("tool1", [MockTool("final_answer")])],
-                "test_agent",
-                pytest.raises(ValueError),
+                    [MockTool("tool1")],
+                    [MockAgent("tool1", [MockTool("final_answer")])],
+                    "test_agent",
+                    pytest.raises(ValueError),
             ),
             # Valid case: tool name same as managed agent's tool name
             ([MockTool("tool1")], [MockAgent("agent1", [MockTool("tool1")])], "test_agent", does_not_raise()),
@@ -891,13 +893,13 @@ class TestMultiStepAgent:
             ([MockTool("tool1")], [], "tool1", pytest.raises(ValueError)),
             # Valid case: duplicate tool names across managed agents
             (
-                [MockTool("tool1")],
-                [
-                    MockAgent("agent1", [MockTool("tool2"), MockTool("final_answer")]),
-                    MockAgent("agent2", [MockTool("tool2"), MockTool("final_answer")]),
-                ],
-                "test_agent",
-                does_not_raise(),
+                    [MockTool("tool1")],
+                    [
+                        MockAgent("agent1", [MockTool("tool2"), MockTool("final_answer")]),
+                        MockAgent("agent2", [MockTool("tool2"), MockTool("final_answer")]),
+                    ],
+                    "test_agent",
+                    does_not_raise(),
             ),
         ],
     )
@@ -1358,7 +1360,7 @@ class TestMultiAgents:
         assert agent2.executor_type == "local"
         assert agent2.executor_kwargs == {"max_workers": 2}
         assert (
-            agent2.managed_agents["web_agent"].tools["web_search"].max_results == 10
+                agent2.managed_agents["web_agent"].tools["web_search"].max_results == 10
         )  # For now tool init parameters are forgotten
         assert agent2.model.kwargs["temperature"] == pytest.approx(0.5)
 
@@ -1367,11 +1369,11 @@ class TestMultiAgents:
             model_id = "fake_model"
 
             def generate(
-                self,
-                messages,
-                stop_sequences=None,
-                grammar=None,
-                tools_to_call_from=None,
+                    self,
+                    messages,
+                    stop_sequences=None,
+                    grammar=None,
+                    tools_to_call_from=None,
             ):
                 if tools_to_call_from is not None:
                     if len(messages) < 3:
@@ -1435,11 +1437,11 @@ final_answer("Final report.")
             model_id = "fake_model"
 
             def generate(
-                self,
-                messages,
-                tools_to_call_from=None,
-                stop_sequences=None,
-                grammar=None,
+                    self,
+                    messages,
+                    tools_to_call_from=None,
+                    stop_sequences=None,
+                    grammar=None,
             ):
                 return ChatMessage(
                     role="assistant",

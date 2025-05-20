@@ -101,7 +101,7 @@ def pull_messages_from_step(step_log: MemoryStep, skip_model_outputs: bool = Fal
 
         # Display execution logs if they exist
         if hasattr(step_log, "observations") and (
-            step_log.observations is not None and step_log.observations.strip()
+                step_log.observations is not None and step_log.observations.strip()
         ):  # Only yield execution logs if there's actual content
             log_content = step_log.observations.strip()
             if log_content:
@@ -179,11 +179,11 @@ def pull_messages_from_step(step_log: MemoryStep, skip_model_outputs: bool = Fal
 
 
 def stream_to_gradio(
-    agent,
-    task: str,
-    task_images: list | None = None,
-    reset_agent_memory: bool = False,
-    additional_args: dict | None = None,
+        agent,
+        task: str,
+        task_images: list | None = None,
+        reset_agent_memory: bool = False,
+        additional_args: dict | None = None,
 ):
     """Runs an agent with the given task and streams the messages from the agent as gradio ChatMessages."""
     total_input_tokens = 0
@@ -197,7 +197,7 @@ def stream_to_gradio(
     intermediate_text = ""
 
     for step_log in agent.run(
-        task, images=task_images, stream=True, reset=reset_agent_memory, additional_args=additional_args
+            task, images=task_images, stream=True, reset=reset_agent_memory, additional_args=additional_args
     ):
         # Track tokens if model provides them
         if getattr(agent.model, "last_input_token_count", None) is not None:
@@ -210,9 +210,9 @@ def stream_to_gradio(
         if isinstance(step_log, MemoryStep):
             intermediate_text = ""
             for message in pull_messages_from_step(
-                step_log,
-                # If we're streaming model outputs, no need to display them twice
-                skip_model_outputs=getattr(agent, "stream_outputs", False),
+                    step_log,
+                    # If we're streaming model outputs, no need to display them twice
+                    skip_model_outputs=getattr(agent, "stream_outputs", False),
             ):
                 yield message
         elif isinstance(step_log, ChatMessageStreamDelta):

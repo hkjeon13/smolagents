@@ -12,7 +12,6 @@ from urllib.parse import unquote, urljoin, urlparse
 import pathvalidate
 import requests
 from serpapi import GoogleSearch
-
 from smolagents import Tool
 
 from .cookies import COOKIES
@@ -23,12 +22,12 @@ class SimpleTextBrowser:
     """(In preview) An extremely simple text-based web browser comparable to Lynx. Suitable for Agentic use."""
 
     def __init__(
-        self,
-        start_page: str | None = None,
-        viewport_size: int | None = 1024 * 8,
-        downloads_folder: str | None | None = None,
-        serpapi_key: str | None | None = None,
-        request_kwargs: dict[str, Any] | None | None = None,
+            self,
+            start_page: str | None = None,
+            viewport_size: int | None = 1024 * 8,
+            downloads_folder: str | None | None = None,
+            serpapi_key: str | None | None = None,
+            request_kwargs: dict[str, Any] | None | None = None,
     ):
         self.start_page: str = start_page if start_page else "about:blank"
         self.viewport_size = viewport_size  # Applies only to the standard uri types
@@ -60,12 +59,12 @@ class SimpleTextBrowser:
         if uri_or_path == "about:blank":
             self._set_page_content("")
         elif uri_or_path.startswith("google:"):
-            self._serpapi_search(uri_or_path[len("google:") :].strip(), filter_year=filter_year)
+            self._serpapi_search(uri_or_path[len("google:"):].strip(), filter_year=filter_year)
         else:
             if (
-                not uri_or_path.startswith("http:")
-                and not uri_or_path.startswith("https:")
-                and not uri_or_path.startswith("file:")
+                    not uri_or_path.startswith("http:")
+                    and not uri_or_path.startswith("https:")
+                    and not uri_or_path.startswith("file:")
             ):
                 if len(self.history) > 1:
                     prior_address = self.history[-2][0]
@@ -82,7 +81,7 @@ class SimpleTextBrowser:
     def viewport(self) -> str:
         """Return the content of the current viewport."""
         bounds = self.viewport_pages[self.viewport_current_page]
-        return self.page_content[bounds[0] : bounds[1]]
+        return self.page_content[bounds[0]: bounds[1]]
 
     @property
     def page_content(self) -> str:
@@ -165,7 +164,7 @@ class SimpleTextBrowser:
 
         for i in idxs:
             bounds = self.viewport_pages[i]
-            content = self.page_content[bounds[0] : bounds[1]]
+            content = self.page_content[bounds[0]: bounds[1]]
 
             # TODO: Remove markdown links and images
             ncontent = " " + (" ".join(re.split(r"\W+", content))).strip().lower() + " "
@@ -254,8 +253,8 @@ class SimpleTextBrowser:
                 web_snippets.append(redacted_version)
 
         content = (
-            f"A Google search for '{query}' found {len(web_snippets)} results:\n\n## Web Results\n"
-            + "\n\n".join(web_snippets)
+                f"A Google search for '{query}' found {len(web_snippets)} results:\n\n## Web Results\n"
+                + "\n\n".join(web_snippets)
         )
 
         self._set_page_content(content)
@@ -478,10 +477,10 @@ class ArchiveSearchTool(Tool):
         self.browser.visit_page(target_url)
         header, content = self.browser._state()
         return (
-            f"Web archive for url {url}, snapshot taken at date {closest['timestamp'][:8]}:\n"
-            + header.strip()
-            + "\n=======================\n"
-            + content
+                f"Web archive for url {url}, snapshot taken at date {closest['timestamp'][:8]}:\n"
+                + header.strip()
+                + "\n=======================\n"
+                + content
         )
 
 
@@ -540,8 +539,8 @@ class FinderTool(Tool):
 
         if find_result is None:
             return (
-                header.strip()
-                + f"\n=======================\nThe search string '{search_string}' was not found on this page."
+                    header.strip()
+                    + f"\n=======================\nThe search string '{search_string}' was not found on this page."
             )
         else:
             return header.strip() + "\n=======================\n" + content

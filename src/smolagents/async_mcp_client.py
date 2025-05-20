@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 import asyncio
-import jsonref  # type: ignore
 import keyword
 import logging
 import re
@@ -15,6 +14,7 @@ from inspect import iscoroutinefunction
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Callable, Coroutine
 
+import jsonref  # type: ignore
 import mcp
 import smolagents  # type: ignore
 from mcpadapt.core import MCPAdapt, ToolAdapter
@@ -44,17 +44,17 @@ class SmolAgentsAdapter(ToolAdapter):
     """
 
     def adapt(
-        self,
-        func: Callable[[dict | None], mcp.types.CallToolResult],
-        mcp_tool: mcp.types.Tool,
+            self,
+            func: Callable[[dict | None], mcp.types.CallToolResult],
+            mcp_tool: mcp.types.Tool,
     ) -> smolagents.Tool:
         class MCPAdaptTool(smolagents.Tool):
             def __init__(
-                self,
-                name: str,
-                description: str,
-                inputs: dict[str, dict[str, str]],
-                output_type: str,
+                    self,
+                    name: str,
+                    description: str,
+                    inputs: dict[str, dict[str, str]],
+                    output_type: str,
             ):
                 self.name = _sanitize_function_name(name)
                 self.description = description
@@ -72,7 +72,8 @@ class SmolAgentsAdapter(ToolAdapter):
                         else:
                             mcp_output = func(args[0])
                     else:
-                        raise ValueError(f"tool {self.name} does not support multiple positional arguments or combined positional and keyword arguments")
+                        raise ValueError(
+                            f"tool {self.name} does not support multiple positional arguments or combined positional and keyword arguments")
                 else:
                     if iscoroutinefunction(func):
                         future = asyncio.run_coroutine_threadsafe(func(kwargs), asyncio.get_event_loop())
@@ -179,8 +180,9 @@ class AsyncMCPClient:
     """Manages connection to an MCP server and exposes tools for SmolAgents."""
 
     def __init__(
-        self,
-        server_parameters: "StdioServerParameters" | dict[str, Any] | list["StdioServerParameters" | dict[str, Any]],
+            self,
+            server_parameters: "StdioServerParameters" | dict[str, Any] | list[
+                "StdioServerParameters" | dict[str, Any]],
     ):
         self._adapter = MCPAdapt(server_parameters, SmolAgentsAdapter())
         self._tools: list[Tool] | None = None
@@ -189,10 +191,10 @@ class AsyncMCPClient:
         self._tools = self._adapter.__enter__()
 
     def disconnect(
-        self,
-        exc_type: type[BaseException] | None = None,
-        exc_value: BaseException | None = None,
-        exc_traceback: TracebackType | None = None,
+            self,
+            exc_type: type[BaseException] | None = None,
+            exc_value: BaseException | None = None,
+            exc_traceback: TracebackType | None = None,
     ):
         self._adapter.__exit__(exc_type, exc_value, exc_traceback)
 

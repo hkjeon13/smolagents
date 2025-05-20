@@ -1,8 +1,8 @@
 from collections.abc import AsyncGenerator
 from typing import Any
+
 from . import Tool, ChatMessage
 from .models import Model, ChatMessageStreamDelta
-
 
 
 class AsyncModel(Model):
@@ -11,12 +11,12 @@ class AsyncModel(Model):
     """
 
     async def generate(
-        self,
-        messages: list[dict[str, str | list[dict]]],
-        stop_sequences: list[str] | None = None,
-        grammar: str | None = None,
-        tools_to_call_from: list[Tool] | None = None,
-        **kwargs,
+            self,
+            messages: list[dict[str, str | list[dict]]],
+            stop_sequences: list[str] | None = None,
+            grammar: str | None = None,
+            tools_to_call_from: list[Tool] | None = None,
+            **kwargs,
     ) -> ChatMessage:
         """
         Generate a response from the model.
@@ -37,12 +37,12 @@ class AsyncModel(Model):
         return await self.generate(*args, **kwargs)
 
     async def generate_stream(
-        self,
-        messages: list[dict[str, str | list[dict]]],
-        stop_sequences: list[str] | None = None,
-        grammar: str | None = None,
-        tools_to_call_from: list[Tool] | None = None,
-        **kwargs,
+            self,
+            messages: list[dict[str, str | list[dict]]],
+            stop_sequences: list[str] | None = None,
+            grammar: str | None = None,
+            tools_to_call_from: list[Tool] | None = None,
+            **kwargs,
     ) -> AsyncGenerator[ChatMessageStreamDelta]:
         """
         Generate a response from the model in a streaming manner.
@@ -90,6 +90,7 @@ class AsyncApiModel(AsyncModel):
         """Create the API client for the specific service."""
         raise NotImplementedError("Subclasses must implement this method to create a client")
 
+
 class AsyncOpenAIServerModel(AsyncApiModel):
     """This model connects to an OpenAI-compatible API server.
 
@@ -116,16 +117,16 @@ class AsyncOpenAIServerModel(AsyncApiModel):
     """
 
     def __init__(
-        self,
-        model_id: str,
-        api_base: str | None = None,
-        api_key: str | None = None,
-        organization: str | None = None,
-        project: str | None = None,
-        client_kwargs: dict[str, Any] | None = None,
-        custom_role_conversions: dict[str, str] | None = None,
-        flatten_messages_as_text: bool = False,
-        **kwargs,
+            self,
+            model_id: str,
+            api_base: str | None = None,
+            api_key: str | None = None,
+            organization: str | None = None,
+            project: str | None = None,
+            client_kwargs: dict[str, Any] | None = None,
+            custom_role_conversions: dict[str, str] | None = None,
+            flatten_messages_as_text: bool = False,
+            **kwargs,
     ):
         self.client_kwargs = {
             **(client_kwargs or {}),
@@ -151,14 +152,13 @@ class AsyncOpenAIServerModel(AsyncApiModel):
 
         return openai.AsyncOpenAI(**self.client_kwargs)
 
-
     async def generate_stream(
-        self,
-        messages: list[dict[str, str | list[dict]]],
-        stop_sequences: list[str] | None = None,
-        grammar: str | None = None,
-        tools_to_call_from: list[Tool] | None = None,
-        **kwargs,
+            self,
+            messages: list[dict[str, str | list[dict]]],
+            stop_sequences: list[str] | None = None,
+            grammar: str | None = None,
+            tools_to_call_from: list[Tool] | None = None,
+            **kwargs,
     ) -> AsyncGenerator[ChatMessageStreamDelta]:
         if tools_to_call_from:
             raise NotImplementedError("Streaming is not yet supported for tool calling")
@@ -175,7 +175,7 @@ class AsyncOpenAIServerModel(AsyncApiModel):
         )
 
         async for event in self.client.chat.completions.create(
-            **completion_kwargs, stream=True, stream_options={"include_usage": True}
+                **completion_kwargs, stream=True, stream_options={"include_usage": True}
         ):
             if event.choices:
                 if event.choices[0].delta is None:
@@ -190,12 +190,12 @@ class AsyncOpenAIServerModel(AsyncApiModel):
                 self.last_output_token_count = event.usage.completion_tokens
 
     async def generate(
-        self,
-        messages: list[dict[str, str | list[dict]]],
-        stop_sequences: list[str] | None = None,
-        grammar: str | None = None,
-        tools_to_call_from: list[Tool] | None = None,
-        **kwargs,
+            self,
+            messages: list[dict[str, str | list[dict]]],
+            stop_sequences: list[str] | None = None,
+            grammar: str | None = None,
+            tools_to_call_from: list[Tool] | None = None,
+            **kwargs,
     ) -> ChatMessage:
         completion_kwargs = self._prepare_completion_kwargs(
             messages=messages,
@@ -239,14 +239,14 @@ class AsyncAzureOpenAIServerModel(AsyncOpenAIServerModel):
     """
 
     def __init__(
-        self,
-        model_id: str,
-        azure_endpoint: str | None = None,
-        api_key: str | None = None,
-        api_version: str | None = None,
-        client_kwargs: dict[str, Any] | None = None,
-        custom_role_conversions: dict[str, str] | None = None,
-        **kwargs,
+            self,
+            model_id: str,
+            azure_endpoint: str | None = None,
+            api_key: str | None = None,
+            api_version: str | None = None,
+            client_kwargs: dict[str, Any] | None = None,
+            custom_role_conversions: dict[str, str] | None = None,
+            **kwargs,
     ):
         client_kwargs = client_kwargs or {}
         client_kwargs.update(
@@ -272,5 +272,3 @@ class AsyncAzureOpenAIServerModel(AsyncOpenAIServerModel):
             ) from e
 
         return openai.AsyncAzureOpenAI(**self.client_kwargs)
-
-

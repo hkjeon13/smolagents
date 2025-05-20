@@ -1,6 +1,5 @@
 import pytest
 
-
 AGENT_DICTS = {
     "v1.9": {
         "tools": [],

@@ -6,13 +6,11 @@ from smolagents.models import ChatMessage, MessageRole
 from smolagents.monitoring import AgentLogger, LogLevel
 from smolagents.utils import AgentError, make_json_serializable
 
-
 if TYPE_CHECKING:
     import PIL.Image
 
     from smolagents.models import ChatMessage
     from smolagents.monitoring import AgentLogger
-
 
 logger = getLogger(__name__)
 
@@ -127,9 +125,9 @@ class ActionStep(MemoryStep):
             )
         if self.error is not None:
             error_message = (
-                "Error:\n"
-                + str(self.error)
-                + "\nNow let's retry: take care not to repeat previous errors! If you have retried several times, try a completely different approach.\n"
+                    "Error:\n"
+                    + str(self.error)
+                    + "\nNow let's retry: take care not to repeat previous errors! If you have retried several times, try a completely different approach.\n"
             )
             message_content = f"Call id: {self.tool_calls[0].id}\n" if self.tool_calls else ""
             message_content += error_message

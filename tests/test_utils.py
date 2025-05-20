@@ -19,7 +19,6 @@ import unittest
 
 import pytest
 from IPython.core.interactiveshell import InteractiveShell
-
 from smolagents import Tool
 from smolagents.tools import tool
 from smolagents.utils import get_source, instance_to_source, is_valid_name, parse_code_blobs, parse_json_blob
@@ -413,34 +412,34 @@ def test_e2e_ipython_function_tool_save(tmp_path):
     "raw_json, expected_data, expected_blob",
     [
         (
-            """{}""",
-            {},
-            "",
+                """{}""",
+                {},
+                "",
         ),
         (
-            """Text{}""",
-            {},
-            "Text",
+                """Text{}""",
+                {},
+                "Text",
         ),
         (
-            """{"simple": "json"}""",
-            {"simple": "json"},
-            "",
+                """{"simple": "json"}""",
+                {"simple": "json"},
+                "",
         ),
         (
-            """With text here{"simple": "json"}""",
-            {"simple": "json"},
-            "With text here",
+                """With text here{"simple": "json"}""",
+                {"simple": "json"},
+                "With text here",
         ),
         (
-            """{"simple": "json"}With text after""",
-            {"simple": "json"},
-            "",
+                """{"simple": "json"}With text after""",
+                {"simple": "json"},
+                "",
         ),
         (
-            """With text before{"simple": "json"}And text after""",
-            {"simple": "json"},
-            "With text before",
+                """With text before{"simple": "json"}And text after""",
+                {"simple": "json"},
+                "With text before",
         ),
     ],
 )

@@ -6,7 +6,6 @@ from langchain.docstore.document import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.retrievers import BM25Retriever
 
-
 knowledge_base = datasets.load_dataset("m-ric/huggingface_doc", split="train")
 knowledge_base = knowledge_base.filter(lambda row: row["source"].startswith("huggingface/transformers"))
 
@@ -53,7 +52,6 @@ class RetrieverTool(Tool):
 
 
 from smolagents import CodeAgent, InferenceClientModel
-
 
 retriever_tool = RetrieverTool(docs_processed)
 agent = CodeAgent(

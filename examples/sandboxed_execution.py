@@ -1,6 +1,5 @@
 from smolagents import CodeAgent, InferenceClientModel, WebSearchTool
 
-
 model = InferenceClientModel()
 
 agent = CodeAgent(tools=[WebSearchTool()], model=model, executor_type="docker")

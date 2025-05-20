@@ -39,7 +39,6 @@ from rich.panel import Panel
 from rich.rule import Rule
 from rich.text import Text
 
-
 if TYPE_CHECKING:
     import PIL.Image
 
@@ -78,7 +77,6 @@ from .utils import (
     parse_code_blobs,
     truncate_content,
 )
-
 
 logger = getLogger(__name__)
 
@@ -189,22 +187,22 @@ class MultiStepAgent(ABC):
     """
 
     def __init__(
-        self,
-        tools: list[Tool],
-        model: Model,
-        prompt_templates: PromptTemplates | None = None,
-        max_steps: int = 20,
-        add_base_tools: bool = False,
-        verbosity_level: LogLevel = LogLevel.INFO,
-        grammar: dict[str, str] | None = None,
-        managed_agents: list | None = None,
-        step_callbacks: list[Callable] | None = None,
-        planning_interval: int | None = None,
-        name: str | None = None,
-        description: str | None = None,
-        provide_run_summary: bool = False,
-        final_answer_checks: list[Callable] | None = None,
-        logger: AgentLogger | None = None,
+            self,
+            tools: list[Tool],
+            model: Model,
+            prompt_templates: PromptTemplates | None = None,
+            max_steps: int = 20,
+            add_base_tools: bool = False,
+            verbosity_level: LogLevel = LogLevel.INFO,
+            grammar: dict[str, str] | None = None,
+            managed_agents: list | None = None,
+            step_callbacks: list[Callable] | None = None,
+            planning_interval: int | None = None,
+            name: str | None = None,
+            description: str | None = None,
+            provide_run_summary: bool = False,
+            final_answer_checks: list[Callable] | None = None,
+            logger: AgentLogger | None = None,
     ):
         self.agent_name = self.__class__.__name__
         self.model = model
@@ -289,13 +287,13 @@ class MultiStepAgent(ABC):
             )
 
     def run(
-        self,
-        task: str,
-        stream: bool = False,
-        reset: bool = True,
-        images: list["PIL.Image.Image"] | None = None,
-        additional_args: dict | None = None,
-        max_steps: int | None = None,
+            self,
+            task: str,
+            stream: bool = False,
+            reset: bool = True,
+            images: list["PIL.Image.Image"] | None = None,
+            additional_args: dict | None = None,
+            max_steps: int | None = None,
     ):
         """
         Run the agent for the given task.
@@ -351,7 +349,7 @@ You have been provided with these additional arguments, that you can access usin
         return list(self._run_stream(task=self.task, max_steps=max_steps, images=images))[-1].final_answer
 
     def _run_stream(
-        self, task: str, max_steps: int, images: list["PIL.Image.Image"] | None = None
+            self, task: str, max_steps: int, images: list["PIL.Image.Image"] | None = None
     ) -> Generator[ActionStep | PlanningStep | FinalAnswerStep]:
         final_answer = None
         self.step_number = 1
@@ -360,10 +358,10 @@ You have been provided with these additional arguments, that you can access usin
                 raise AgentError("Agent interrupted.", self.logger)
             step_start_time = time.time()
             if self.planning_interval is not None and (
-                self.step_number == 1 or (self.step_number - 1) % self.planning_interval == 0
+                    self.step_number == 1 or (self.step_number - 1) % self.planning_interval == 0
             ):
                 for element in self._generate_planning_step(
-                    task, is_first_step=(self.step_number == 1), step=self.step_number
+                        task, is_first_step=(self.step_number == 1), step=self.step_number
                 ):
                     yield element
                 self.memory.steps.append(element)
@@ -433,7 +431,7 @@ You have been provided with these additional arguments, that you can access usin
         return final_answer
 
     def _generate_planning_step(
-        self, task, is_first_step: bool, step: int
+            self, task, is_first_step: bool, step: int
     ) -> Generator[ChatMessageStreamDelta, PlanningStep]:
         if is_first_step:
             input_messages = [
@@ -452,7 +450,8 @@ You have been provided with these additional arguments, that you can access usin
             ]
             if self.stream_outputs and hasattr(self.model, "generate_stream"):
                 plan_message_content = ""
-                for completion_delta in self.model.generate_stream(input_messages, stop_sequences=["<end_plan>"]):  # type: ignore
+                for completion_delta in self.model.generate_stream(input_messages,
+                                                                   stop_sequences=["<end_plan>"]):  # type: ignore
                     plan_message_content += completion_delta.content
                     yield completion_delta
             else:
@@ -495,7 +494,8 @@ You have been provided with these additional arguments, that you can access usin
             input_messages = [plan_update_pre] + memory_messages + [plan_update_post]
             if self.stream_outputs and hasattr(self.model, "generate_stream"):
                 plan_message_content = ""
-                for completion_delta in self.model.generate_stream(input_messages, stop_sequences=["<end_plan>"]):  # type: ignore
+                for completion_delta in self.model.generate_stream(input_messages,
+                                                                   stop_sequences=["<end_plan>"]):  # type: ignore
                     plan_message_content += completion_delta.content
                     yield completion_delta
             else:
@@ -528,8 +528,8 @@ You have been provided with these additional arguments, that you can access usin
         self.interrupt_switch = True
 
     def write_memory_to_messages(
-        self,
-        summary_mode: bool | None = False,
+            self,
+            summary_mode: bool | None = False,
     ) -> list[Message]:
         """
         Reads past llm_outputs, actions, and observations or errors from the memory into a series of messages
@@ -858,11 +858,11 @@ You have been provided with these additional arguments, that you can access usin
 
     @classmethod
     def from_hub(
-        cls,
-        repo_id: str,
-        token: str | None = None,
-        trust_remote_code: bool = False,
-        **kwargs,
+            cls,
+            repo_id: str,
+            token: str | None = None,
+            trust_remote_code: bool = False,
+            **kwargs,
     ):
         """
         Loads an agent defined on the Hub.
@@ -943,12 +943,12 @@ You have been provided with these additional arguments, that you can access usin
         return cls.from_dict(agent_dict, **kwargs)
 
     def push_to_hub(
-        self,
-        repo_id: str,
-        commit_message: str = "Upload agent",
-        private: bool | None = None,
-        token: bool | str | None = None,
-        create_pr: bool = False,
+            self,
+            repo_id: str,
+            commit_message: str = "Upload agent",
+            private: bool | None = None,
+            token: bool | str | None = None,
+            create_pr: bool = False,
     ) -> str:
         """
         Upload the agent to the Hub.
@@ -1010,12 +1010,12 @@ class ToolCallingAgent(MultiStepAgent):
     """
 
     def __init__(
-        self,
-        tools: list[Tool],
-        model: Callable[[list[dict[str, str]]], ChatMessage],
-        prompt_templates: PromptTemplates | None = None,
-        planning_interval: int | None = None,
-        **kwargs,
+            self,
+            tools: list[Tool],
+            model: Callable[[list[dict[str, str]]], ChatMessage],
+            prompt_templates: PromptTemplates | None = None,
+            planning_interval: int | None = None,
+            **kwargs,
     ):
         prompt_templates = prompt_templates or yaml.safe_load(
             importlib.resources.files("smolagents.prompts").joinpath("toolcalling_agent.yaml").read_text()
@@ -1226,18 +1226,18 @@ class CodeAgent(MultiStepAgent):
     """
 
     def __init__(
-        self,
-        tools: list[Tool],
-        model: Model,
-        prompt_templates: PromptTemplates | None = None,
-        grammar: dict[str, str] | None = None,
-        additional_authorized_imports: list[str] | None = None,
-        planning_interval: int | None = None,
-        executor_type: str | None = "local",
-        executor_kwargs: dict[str, Any] | None = None,
-        max_print_outputs_length: int | None = None,
-        stream_outputs: bool = False,
-        **kwargs,
+            self,
+            tools: list[Tool],
+            model: Model,
+            prompt_templates: PromptTemplates | None = None,
+            grammar: dict[str, str] | None = None,
+            additional_authorized_imports: list[str] | None = None,
+            planning_interval: int | None = None,
+            executor_type: str | None = "local",
+            executor_kwargs: dict[str, Any] | None = None,
+            max_print_outputs_length: int | None = None,
+            stream_outputs: bool = False,
+            **kwargs,
     ):
         self.additional_authorized_imports = additional_authorized_imports if additional_authorized_imports else []
         self.authorized_imports = sorted(set(BASE_BUILTIN_MODULES) | set(self.additional_authorized_imports))

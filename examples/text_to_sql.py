@@ -11,7 +11,6 @@ from sqlalchemy import (
     text,
 )
 
-
 engine = create_engine("sqlite:///:memory:")
 metadata_obj = MetaData()
 
@@ -70,7 +69,6 @@ def sql_engine(query: str) -> str:
 
 
 from smolagents import CodeAgent, InferenceClientModel
-
 
 agent = CodeAgent(
     tools=[sql_engine],

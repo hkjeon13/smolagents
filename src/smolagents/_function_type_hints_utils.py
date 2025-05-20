@@ -37,7 +37,6 @@ from typing import (
     get_type_hints,
 )
 
-
 IMPORT_TO_PACKAGE_MAPPING = {
     "wikipediaapi": "wikipedia-api",
 }
@@ -240,7 +239,8 @@ args_split_re = re.compile(
     r"(?:^|\n)"  # Match the start of the args block, or a newline
     r"\s*(\w+)\s*(?:\([^)]*?\))?:\s*"  # Capture the argument name (ignore the type) and strip spacing
     r"(.*?)\s*"  # Capture the argument description, which can span multiple lines, and strip trailing spacing
-    r"(?=\n\s*\w+\s*(?:\([^)]*?\))?:|\Z)",  # Stop when you hit the next argument (with or without type) or the end of the block
+    r"(?=\n\s*\w+\s*(?:\([^)]*?\))?:|\Z)",
+    # Stop when you hit the next argument (with or without type) or the end of the block
     re.DOTALL | re.VERBOSE,
 )
 # Extracts the Returns: block from the docstring, if present. Note that most chat templates ignore the return type/doc!
@@ -254,7 +254,7 @@ returns_re = re.compile(
 
 
 def _parse_google_format_docstring(
-    docstring: str,
+        docstring: str,
 ) -> tuple[str | None, dict | None, str | None]:
     """
     Parses a Google-style docstring to extract the function description,
@@ -310,9 +310,9 @@ def _convert_type_hints_to_json_schema(func: Callable, error_on_missing_type_hin
 
     # Return: multi‐type union -> treat as any
     if (
-        "return" in properties
-        and (return_type := properties["return"].get("type"))
-        and not isinstance(return_type, str)
+            "return" in properties
+            and (return_type := properties["return"].get("type"))
+            and not isinstance(return_type, str)
     ):
         properties["return"]["type"] = "any"
 

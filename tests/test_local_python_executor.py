@@ -23,7 +23,6 @@ from unittest.mock import patch
 import numpy as np
 import pandas as pd
 import pytest
-
 from smolagents.default_tools import BASE_PYTHON_TOOLS, FinalAnswerTool
 from smolagents.local_python_executor import (
     DANGEROUS_FUNCTIONS,
@@ -1151,21 +1150,21 @@ def test_evaluate_annassign():
     "code, expected_result",
     [
         (
-            dedent("""\
+                dedent("""\
                 x = 1
                 x += 2
             """),
-            3,
+                3,
         ),
         (
-            dedent("""\
+                dedent("""\
                 x = "a"
                 x += "b"
             """),
-            "ab",
+                "ab",
         ),
         (
-            dedent("""\
+                dedent("""\
                 class Custom:
                     def __init__(self, value):
                         self.value = value
@@ -1177,7 +1176,7 @@ def test_evaluate_annassign():
                 x += 2
                 x.value
             """),
-            21,
+                21,
         ),
     ],
 )
@@ -1267,34 +1266,34 @@ def test_evaluate_augassign_custom(operator, expected_result):
     "code, expected_error_message",
     [
         (
-            dedent("""\
+                dedent("""\
                 x = 5
                 del x
                 x
             """),
-            "The variable `x` is not defined",
+                "The variable `x` is not defined",
         ),
         (
-            dedent("""\
+                dedent("""\
                 x = [1, 2, 3]
                 del x[2]
                 x[2]
             """),
-            "IndexError: list index out of range",
+                "IndexError: list index out of range",
         ),
         (
-            dedent("""\
+                dedent("""\
                 x = {"key": "value"}
                 del x["key"]
                 x["key"]
             """),
-            "Could not index {} with 'key'",
+                "Could not index {} with 'key'",
         ),
         (
-            dedent("""\
+                dedent("""\
                 del x
             """),
-            "Cannot delete name 'x': name is not defined",
+                "Cannot delete name 'x': name is not defined",
         ),
     ],
 )
@@ -1396,34 +1395,34 @@ def test_evaluate_condition(condition, state, expected_result):
         ("a > b", {"a": pd.Series([1, 2, 3]), "b": pd.Series([2, 2, 2])}, pd.Series([False, False, True])),
         ("a >= b", {"a": pd.Series([1, 2, 3]), "b": pd.Series([2, 2, 2])}, pd.Series([False, True, True])),
         (
-            "a == b",
-            {"a": pd.DataFrame({"x": [1, 2], "y": [3, 4]}), "b": pd.DataFrame({"x": [1, 2], "y": [3, 5]})},
-            pd.DataFrame({"x": [True, True], "y": [True, False]}),
+                "a == b",
+                {"a": pd.DataFrame({"x": [1, 2], "y": [3, 4]}), "b": pd.DataFrame({"x": [1, 2], "y": [3, 5]})},
+                pd.DataFrame({"x": [True, True], "y": [True, False]}),
         ),
         (
-            "a != b",
-            {"a": pd.DataFrame({"x": [1, 2], "y": [3, 4]}), "b": pd.DataFrame({"x": [1, 2], "y": [3, 5]})},
-            pd.DataFrame({"x": [False, False], "y": [False, True]}),
+                "a != b",
+                {"a": pd.DataFrame({"x": [1, 2], "y": [3, 4]}), "b": pd.DataFrame({"x": [1, 2], "y": [3, 5]})},
+                pd.DataFrame({"x": [False, False], "y": [False, True]}),
         ),
         (
-            "a < b",
-            {"a": pd.DataFrame({"x": [1, 2], "y": [3, 4]}), "b": pd.DataFrame({"x": [2, 2], "y": [2, 2]})},
-            pd.DataFrame({"x": [True, False], "y": [False, False]}),
+                "a < b",
+                {"a": pd.DataFrame({"x": [1, 2], "y": [3, 4]}), "b": pd.DataFrame({"x": [2, 2], "y": [2, 2]})},
+                pd.DataFrame({"x": [True, False], "y": [False, False]}),
         ),
         (
-            "a <= b",
-            {"a": pd.DataFrame({"x": [1, 2], "y": [3, 4]}), "b": pd.DataFrame({"x": [2, 2], "y": [2, 2]})},
-            pd.DataFrame({"x": [True, True], "y": [False, False]}),
+                "a <= b",
+                {"a": pd.DataFrame({"x": [1, 2], "y": [3, 4]}), "b": pd.DataFrame({"x": [2, 2], "y": [2, 2]})},
+                pd.DataFrame({"x": [True, True], "y": [False, False]}),
         ),
         (
-            "a > b",
-            {"a": pd.DataFrame({"x": [1, 2], "y": [3, 4]}), "b": pd.DataFrame({"x": [2, 2], "y": [2, 2]})},
-            pd.DataFrame({"x": [False, False], "y": [True, True]}),
+                "a > b",
+                {"a": pd.DataFrame({"x": [1, 2], "y": [3, 4]}), "b": pd.DataFrame({"x": [2, 2], "y": [2, 2]})},
+                pd.DataFrame({"x": [False, False], "y": [True, True]}),
         ),
         (
-            "a >= b",
-            {"a": pd.DataFrame({"x": [1, 2], "y": [3, 4]}), "b": pd.DataFrame({"x": [2, 2], "y": [2, 2]})},
-            pd.DataFrame({"x": [False, True], "y": [True, True]}),
+                "a >= b",
+                {"a": pd.DataFrame({"x": [1, 2], "y": [3, 4]}), "b": pd.DataFrame({"x": [2, 2], "y": [2, 2]})},
+                pd.DataFrame({"x": [False, True], "y": [True, True]}),
         ),
     ],
 )
@@ -1441,26 +1440,26 @@ def test_evaluate_condition_with_pandas(condition, state, expected_result):
     [
         # Chained conditions:
         (
-            "a == b == c",
-            {
-                "a": pd.Series([1, 2, 3]),
-                "b": pd.Series([2, 2, 2]),
-                "c": pd.Series([3, 3, 3]),
-            },
-            ValueError(
-                "The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all()."
-            ),
+                "a == b == c",
+                {
+                    "a": pd.Series([1, 2, 3]),
+                    "b": pd.Series([2, 2, 2]),
+                    "c": pd.Series([3, 3, 3]),
+                },
+                ValueError(
+                    "The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all()."
+                ),
         ),
         (
-            "a == b == c",
-            {
-                "a": pd.DataFrame({"x": [1, 2], "y": [3, 4]}),
-                "b": pd.DataFrame({"x": [2, 2], "y": [2, 2]}),
-                "c": pd.DataFrame({"x": [3, 3], "y": [3, 3]}),
-            },
-            ValueError(
-                "The truth value of a DataFrame is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all()."
-            ),
+                "a == b == c",
+                {
+                    "a": pd.DataFrame({"x": [1, 2], "y": [3, 4]}),
+                    "b": pd.DataFrame({"x": [2, 2], "y": [2, 2]}),
+                    "c": pd.DataFrame({"x": [3, 3], "y": [3, 3]}),
+                },
+                ValueError(
+                    "The truth value of a DataFrame is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all()."
+                ),
         ),
     ],
 )
@@ -1786,7 +1785,7 @@ class TestLocalPythonExecutorSecurity:
         ],
     )
     def test_vulnerability_builtins_dangerous_functions(
-        self, additional_authorized_imports, additional_tools, expected_error
+            self, additional_authorized_imports, additional_tools, expected_error
     ):
         executor = LocalPythonExecutor(additional_authorized_imports)
         if additional_tools:
@@ -1901,57 +1900,57 @@ class TestLocalPythonExecutorSecurity:
         [
             # os submodule
             (
-                "import queue; queue.threading._os.system(':')",
-                [],
-                InterpreterError("Forbidden access to module: threading"),
+                    "import queue; queue.threading._os.system(':')",
+                    [],
+                    InterpreterError("Forbidden access to module: threading"),
             ),
             (
-                "import queue; queue.threading._os.system(':')",
-                ["threading"],
-                InterpreterError("Forbidden access to module: os"),
+                    "import queue; queue.threading._os.system(':')",
+                    ["threading"],
+                    InterpreterError("Forbidden access to module: os"),
             ),
             ("import random; random._os.system(':')", [], InterpreterError("Forbidden access to module: os")),
             (
-                "import random; random.__dict__['_os'].system(':')",
-                [],
-                InterpreterError("Forbidden access to dunder attribute: __dict__"),
+                    "import random; random.__dict__['_os'].system(':')",
+                    [],
+                    InterpreterError("Forbidden access to dunder attribute: __dict__"),
             ),
             (
-                "import doctest; doctest.inspect.os.system(':')",
-                ["doctest"],
-                InterpreterError("Forbidden access to module: inspect"),
+                    "import doctest; doctest.inspect.os.system(':')",
+                    ["doctest"],
+                    InterpreterError("Forbidden access to module: inspect"),
             ),
             (
-                "import doctest; doctest.inspect.os.system(':')",
-                ["doctest", "inspect"],
-                InterpreterError("Forbidden access to module: os"),
+                    "import doctest; doctest.inspect.os.system(':')",
+                    ["doctest", "inspect"],
+                    InterpreterError("Forbidden access to module: os"),
             ),
             # subprocess submodule
             (
-                "import asyncio; asyncio.base_events.events.subprocess",
-                ["asyncio"],
-                InterpreterError("Forbidden access to module: asyncio.base_events"),
+                    "import asyncio; asyncio.base_events.events.subprocess",
+                    ["asyncio"],
+                    InterpreterError("Forbidden access to module: asyncio.base_events"),
             ),
             (
-                "import asyncio; asyncio.base_events.events.subprocess",
-                ["asyncio", "asyncio.base_events"],
-                InterpreterError("Forbidden access to module: asyncio.events"),
+                    "import asyncio; asyncio.base_events.events.subprocess",
+                    ["asyncio", "asyncio.base_events"],
+                    InterpreterError("Forbidden access to module: asyncio.events"),
             ),
             (
-                "import asyncio; asyncio.base_events.events.subprocess",
-                ["asyncio", "asyncio.base_events", "asyncio.base_events.events"],
-                InterpreterError("Forbidden access to module: asyncio.events"),
+                    "import asyncio; asyncio.base_events.events.subprocess",
+                    ["asyncio", "asyncio.base_events", "asyncio.base_events.events"],
+                    InterpreterError("Forbidden access to module: asyncio.events"),
             ),
             # sys submodule
             (
-                "import queue; queue.threading._sys.modules['os'].system(':')",
-                [],
-                InterpreterError("Forbidden access to module: threading"),
+                    "import queue; queue.threading._sys.modules['os'].system(':')",
+                    [],
+                    InterpreterError("Forbidden access to module: threading"),
             ),
             (
-                "import queue; queue.threading._sys.modules['os'].system(':')",
-                ["threading"],
-                InterpreterError("Forbidden access to module: sys"),
+                    "import queue; queue.threading._sys.modules['os'].system(':')",
+                    ["threading"],
+                    InterpreterError("Forbidden access to module: sys"),
             ),
             # Allowed
             ("import pandas; pandas.io", ["pandas", "pandas.io"], None),
@@ -1972,9 +1971,9 @@ class TestLocalPythonExecutorSecurity:
             ([], [], InterpreterError("Import of sys is not allowed")),
             (["sys"], [], InterpreterError("Forbidden access to module: builtins")),
             (
-                ["sys", "builtins"],
-                [],
-                InterpreterError("Forbidden access to function: __import__"),
+                    ["sys", "builtins"],
+                    [],
+                    InterpreterError("Forbidden access to function: __import__"),
             ),
             (["sys", "builtins"], ["__import__"], InterpreterError("Forbidden access to module: os")),
             (["sys", "builtins", "os"], ["__import__"], None),
@@ -2009,14 +2008,15 @@ class TestLocalPythonExecutorSecurity:
         [
             ([], [], InterpreterError("Forbidden access to dunder attribute: __traceback__")),
             (
-                ["builtins", "os"],
-                ["__import__"],
-                InterpreterError("Forbidden access to dunder attribute: __traceback__"),
+                    ["builtins", "os"],
+                    ["__import__"],
+                    InterpreterError("Forbidden access to dunder attribute: __traceback__"),
             ),
         ],
     )
     def test_vulnerability_builtins_via_traceback(
-        self, patch_builtin_import_module, additional_authorized_imports, additional_tools, expected_error, monkeypatch
+            self, patch_builtin_import_module, additional_authorized_imports, additional_tools, expected_error,
+            monkeypatch
     ):
         if patch_builtin_import_module:
             monkeypatch.setattr("builtins.__import__.__module__", None)  # inspect.getmodule(func) = None
@@ -2051,20 +2051,21 @@ class TestLocalPythonExecutorSecurity:
             ([], [], InterpreterError("Forbidden access to dunder attribute: __base__")),
             (["warnings"], [], InterpreterError("Forbidden access to dunder attribute: __base__")),
             (
-                ["warnings", "builtins"],
-                [],
-                InterpreterError("Forbidden access to dunder attribute: __base__"),
+                    ["warnings", "builtins"],
+                    [],
+                    InterpreterError("Forbidden access to dunder attribute: __base__"),
             ),
             (["warnings", "builtins", "os"], [], InterpreterError("Forbidden access to dunder attribute: __base__")),
             (
-                ["warnings", "builtins", "os"],
-                ["__import__"],
-                InterpreterError("Forbidden access to dunder attribute: __base__"),
+                    ["warnings", "builtins", "os"],
+                    ["__import__"],
+                    InterpreterError("Forbidden access to dunder attribute: __base__"),
             ),
         ],
     )
     def test_vulnerability_builtins_via_class_catch_warnings(
-        self, patch_builtin_import_module, additional_authorized_imports, additional_tools, expected_error, monkeypatch
+            self, patch_builtin_import_module, additional_authorized_imports, additional_tools, expected_error,
+            monkeypatch
     ):
         if patch_builtin_import_module:
             monkeypatch.setattr("builtins.__import__.__module__", None)  # inspect.getmodule(func) = None

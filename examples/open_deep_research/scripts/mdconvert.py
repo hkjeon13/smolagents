@@ -23,7 +23,6 @@ import pandas as pd
 import pdfminer
 import pdfminer.high_level
 import pptx
-
 # File-format detection
 import puremagic
 import pydub
@@ -77,10 +76,10 @@ class _CustomMarkdownify(markdownify.MarkdownConverter):
 
         # For the replacement see #29: text nodes underscores are escaped
         if (
-            self.options["autolinks"]
-            and text.replace(r"\_", "_") == href
-            and not title
-            and not self.options["default_title"]
+                self.options["autolinks"]
+                and text.replace(r"\_", "_") == href
+                and not title
+                and not self.options["default_title"]
         ):
             # Shortcut syntax
             return "<%s>" % href
@@ -266,7 +265,7 @@ class YouTubeConverter(DocumentConverter):
                     obj_start = lines[0].find("{")
                     obj_end = lines[0].rfind("}")
                     if obj_start >= 0 and obj_end >= 0:
-                        data = json.loads(lines[0][obj_start : obj_end + 1])
+                        data = json.loads(lines[0][obj_start: obj_end + 1])
                         attrdesc = self._findKey(data, "attributedDescriptionBodyText")  # type: ignore
                         if attrdesc:
                             metadata["description"] = str(attrdesc["content"])
@@ -712,11 +711,11 @@ class ImageConverter(MediaConverter):
         mlm_model = kwargs.get("mlm_model")
         if mlm_client is not None and mlm_model is not None:
             md_content += (
-                "\n# Description:\n"
-                + self._get_mlm_description(
-                    local_path, extension, mlm_client, mlm_model, prompt=kwargs.get("mlm_prompt")
-                ).strip()
-                + "\n"
+                    "\n# Description:\n"
+                    + self._get_mlm_description(
+                local_path, extension, mlm_client, mlm_model, prompt=kwargs.get("mlm_prompt")
+            ).strip()
+                    + "\n"
             )
 
         return DocumentConverterResult(
@@ -770,10 +769,10 @@ class MarkdownConverter:
     This reader will convert common file-types or webpages to Markdown."""
 
     def __init__(
-        self,
-        requests_session: requests.Session | None = None,
-        mlm_client: Any | None = None,
-        mlm_model: Any | None = None,
+            self,
+            requests_session: requests.Session | None = None,
+            mlm_client: Any | None = None,
+            mlm_model: Any | None = None,
     ):
         if requests_session is None:
             self._requests_session = requests.Session()
@@ -802,7 +801,7 @@ class MarkdownConverter:
         self.register_page_converter(PdfConverter())
 
     def convert(
-        self, source: str | requests.Response, **kwargs: Any
+            self, source: str | requests.Response, **kwargs: Any
     ) -> DocumentConverterResult:  # TODO: deal with kwargs
         """
         Args:
@@ -875,7 +874,7 @@ class MarkdownConverter:
         return self.convert_response(response, **kwargs)
 
     def convert_response(
-        self, response: requests.Response, **kwargs: Any
+            self, response: requests.Response, **kwargs: Any
     ) -> DocumentConverterResult:  # TODO fix kwargs type
         # Prepare a list of extensions to try (in order of priority)
         ext = kwargs.get("file_extension")

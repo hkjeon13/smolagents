@@ -1,10 +1,8 @@
 from openinference.instrumentation.smolagents import SmolagentsInstrumentor
 from phoenix.otel import register
 
-
 register()
 SmolagentsInstrumentor().instrument(skip_dep_check=True)
-
 
 from smolagents import (
     CodeAgent,
@@ -13,7 +11,6 @@ from smolagents import (
     VisitWebpageTool,
     WebSearchTool,
 )
-
 
 # Then we run the agentic part!
 model = InferenceClientModel()

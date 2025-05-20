@@ -20,7 +20,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from huggingface_hub import ChatCompletionOutputMessage
-
 from smolagents.models import (
     AmazonBedrockServerModel,
     AzureOpenAIServerModel,
@@ -386,8 +385,8 @@ class TestTransformersModel:
         [
             [
                 (
-                    "transformers.AutoModelForImageTextToText.from_pretrained",
-                    {"side_effect": ValueError("Unrecognized configuration class")},
+                        "transformers.AutoModelForImageTextToText.from_pretrained",
+                        {"side_effect": ValueError("Unrecognized configuration class")},
                 ),
                 ("transformers.AutoModelForCausalLM.from_pretrained", {}),
                 ("transformers.AutoTokenizer.from_pretrained", {}),
@@ -457,24 +456,24 @@ def test_get_clean_message_list_role_conversions():
     "convert_images_to_image_urls, expected_clean_message",
     [
         (
-            False,
-            {
-                "role": "user",
-                "content": [
-                    {"type": "image", "image": "encoded_image"},
-                    {"type": "image", "image": "second_encoded_image"},
-                ],
-            },
+                False,
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "image", "image": "encoded_image"},
+                        {"type": "image", "image": "second_encoded_image"},
+                    ],
+                },
         ),
         (
-            True,
-            {
-                "role": "user",
-                "content": [
-                    {"type": "image_url", "image_url": {"url": "data:image/png;base64,encoded_image"}},
-                    {"type": "image_url", "image_url": {"url": "data:image/png;base64,second_encoded_image"}},
-                ],
-            },
+                True,
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "image_url", "image_url": {"url": "data:image/png;base64,encoded_image"}},
+                        {"type": "image_url", "image_url": {"url": "data:image/png;base64,second_encoded_image"}},
+                    ],
+                },
         ),
     ],
 )
@@ -518,31 +517,31 @@ def test_get_clean_message_list_flatten_messages_as_text():
         (OpenAIServerModel, {}, ("openai.OpenAI", {}), False),
         (OpenAIServerModel, {"flatten_messages_as_text": True}, ("openai.OpenAI", {}), True),
         (
-            TransformersModel,
-            {},
-            [
-                (
-                    "transformers.AutoModelForImageTextToText.from_pretrained",
-                    {"side_effect": ValueError("Unrecognized configuration class")},
-                ),
-                ("transformers.AutoModelForCausalLM.from_pretrained", {}),
-                ("transformers.AutoTokenizer.from_pretrained", {}),
-            ],
-            True,
+                TransformersModel,
+                {},
+                [
+                    (
+                            "transformers.AutoModelForImageTextToText.from_pretrained",
+                            {"side_effect": ValueError("Unrecognized configuration class")},
+                    ),
+                    ("transformers.AutoModelForCausalLM.from_pretrained", {}),
+                    ("transformers.AutoTokenizer.from_pretrained", {}),
+                ],
+                True,
         ),
         (
-            TransformersModel,
-            {},
-            [
-                ("transformers.AutoModelForImageTextToText.from_pretrained", {}),
-                ("transformers.AutoProcessor.from_pretrained", {}),
-            ],
-            False,
+                TransformersModel,
+                {},
+                [
+                    ("transformers.AutoModelForImageTextToText.from_pretrained", {}),
+                    ("transformers.AutoProcessor.from_pretrained", {}),
+                ],
+                False,
         ),
     ],
 )
 def test_flatten_messages_as_text_for_all_models(
-    model_class, model_kwargs, patching, expected_flatten_messages_as_text
+        model_class, model_kwargs, patching, expected_flatten_messages_as_text
 ):
     with ExitStack() as stack:
         if isinstance(patching, list):

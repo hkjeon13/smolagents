@@ -14,10 +14,9 @@
 # limitations under the License.
 
 
-import numpy as np
 import PIL.Image
+import numpy as np
 import pytest
-
 from smolagents.agent_types import _AGENT_TYPE_MAPPING
 from smolagents.default_tools import FinalAnswerTool
 

@@ -10,8 +10,6 @@ from pathlib import Path
 import datasets
 import pandas as pd
 from dotenv import load_dotenv
-from tqdm import tqdm
-
 from smolagents import (
     AgentError,
     CodeAgent,
@@ -23,7 +21,7 @@ from smolagents import (
     VisitWebpageTool,
 )
 from smolagents.agents import ActionStep
-
+from tqdm import tqdm
 
 load_dotenv()
 os.makedirs("output", exist_ok=True)
@@ -183,14 +181,14 @@ def answer_single_question(example, model, answers_file, action_type):
 
 
 def answer_questions(
-    eval_ds,
-    model,
-    date,
-    action_type: str = "code",
-    output_dir: str = "output",
-    answers_dataset: str = None,
-    push_answers_to_hub: bool = False,
-    parallel_workers: int = 32,
+        eval_ds,
+        model,
+        date,
+        action_type: str = "code",
+        output_dir: str = "output",
+        answers_dataset: str = None,
+        push_answers_to_hub: bool = False,
+        parallel_workers: int = 32,
 ):
     date = date or datetime.date.today().isoformat()
     model_id = model.model_id

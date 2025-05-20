@@ -22,7 +22,6 @@ from typing import TYPE_CHECKING, Any
 
 from smolagents.tools import Tool
 
-
 __all__ = ["MCPClient"]
 
 if TYPE_CHECKING:
@@ -62,8 +61,9 @@ class MCPClient:
     """
 
     def __init__(
-        self,
-        server_parameters: "StdioServerParameters" | dict[str, Any] | list["StdioServerParameters" | dict[str, Any]],
+            self,
+            server_parameters: "StdioServerParameters" | dict[str, Any] | list[
+                "StdioServerParameters" | dict[str, Any]],
     ):
         try:
             from mcpadapt.core import MCPAdapt
@@ -79,10 +79,10 @@ class MCPClient:
         self._tools: list[Tool] = self._adapter.__enter__()
 
     def disconnect(
-        self,
-        exc_type: type[BaseException] | None = None,
-        exc_value: BaseException | None = None,
-        exc_traceback: TracebackType | None = None,
+            self,
+            exc_type: type[BaseException] | None = None,
+            exc_value: BaseException | None = None,
+            exc_traceback: TracebackType | None = None,
     ):
         """Disconnect from the MCP server"""
         self._adapter.__exit__(exc_type, exc_value, exc_traceback)
@@ -115,10 +115,10 @@ class MCPClient:
         return self._tools
 
     def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_value: BaseException | None,
-        exc_traceback: TracebackType | None,
+            self,
+            exc_type: type[BaseException] | None,
+            exc_value: BaseException | None,
+            exc_traceback: TracebackType | None,
     ):
         """Disconnect from the MCP server."""
         self.disconnect(exc_type, exc_value, exc_traceback)

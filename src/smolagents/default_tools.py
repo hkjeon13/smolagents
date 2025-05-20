@@ -86,6 +86,7 @@ class FinalAnswerTool(Tool):
     def forward(self, answer: Any) -> Any:
         return textwrap.dedent(answer)
 
+
 class UserInputTool(Tool):
     name = "user_input"
     description = "Asks for user's input on a specific question"
@@ -311,9 +312,9 @@ class VisitWebpageTool(Tool):
         if len(content) <= max_length:
             return content
         return (
-            content[: max_length // 2]
-            + f"\n..._This content has been truncated to stay below {max_length} characters_...\n"
-            + content[-max_length // 2 :]
+                content[: max_length // 2]
+                + f"\n..._This content has been truncated to stay below {max_length} characters_...\n"
+                + content[-max_length // 2:]
         )
 
     def forward(self, url: str) -> str:
@@ -386,11 +387,11 @@ class WikipediaSearchTool(Tool):
     output_type = "string"
 
     def __init__(
-        self,
-        user_agent: str = "Smolagents (myemail@example.com)",
-        language: str = "en",
-        content_type: str = "text",
-        extract_format: str = "WIKI",
+            self,
+            user_agent: str = "Smolagents (myemail@example.com)",
+            language: str = "en",
+            content_type: str = "text",
+            extract_format: str = "WIKI",
     ):
         super().__init__()
         try:

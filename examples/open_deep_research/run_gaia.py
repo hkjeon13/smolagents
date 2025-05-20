@@ -12,6 +12,15 @@ import datasets
 import pandas as pd
 from dotenv import load_dotenv
 from huggingface_hub import login, snapshot_download
+from smolagents import (
+    CodeAgent,
+    GoogleSearchTool,
+    LiteLLMModel,
+    Model,
+    ToolCallingAgent,
+)
+from tqdm import tqdm
+
 from scripts.reformulator import prepare_response
 from scripts.run_agents import (
     get_single_file_description,
@@ -28,16 +37,6 @@ from scripts.text_web_browser import (
     VisitTool,
 )
 from scripts.visual_qa import visualizer
-from tqdm import tqdm
-
-from smolagents import (
-    CodeAgent,
-    GoogleSearchTool,
-    LiteLLMModel,
-    Model,
-    ToolCallingAgent,
-)
-
 
 load_dotenv(override=True)
 login(os.getenv("HF_TOKEN"))
@@ -61,7 +60,6 @@ def parse_args():
 print("Make sure you deactivated any VPN like Tailscale, else some URLs will be blocked!")
 
 custom_role_conversions = {"tool-call": "assistant", "tool-response": "user"}
-
 
 user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0"
 
@@ -171,7 +169,7 @@ def append_answer(entry: dict, jsonl_file: str) -> None:
 
 
 def answer_single_question(
-    example: dict, model_id: str, answers_file: str, visual_inspection_tool: TextInspectorTool
+        example: dict, model_id: str, answers_file: str, visual_inspection_tool: TextInspectorTool
 ) -> None:
     model_params: dict[str, Any] = {
         "model_id": model_id,

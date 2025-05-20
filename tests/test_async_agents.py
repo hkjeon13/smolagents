@@ -16,21 +16,14 @@ import io
 import os
 import tempfile
 import uuid
-from collections.abc import Generator, AsyncGenerator
+from collections.abc import AsyncGenerator
 from contextlib import nullcontext as does_not_raise
-from pathlib import Path
 from unittest.mock import AsyncMock, patch, MagicMock
 
 import pytest
-from huggingface_hub import (
-    ChatCompletionOutputFunctionDefinition,
-    ChatCompletionOutputMessage,
-    ChatCompletionOutputToolCall,
-)
 from rich.console import Console
-
 from smolagents import EMPTY_PROMPT_TEMPLATES
-from smolagents.agent_types import AgentImage, AgentText
+from smolagents.agent_types import AgentText
 from smolagents.agents import (
     AgentError,
     AgentMaxStepsError,
@@ -39,7 +32,7 @@ from smolagents.agents import (
 )
 from smolagents.async_agents import AsyncToolCallingAgent, AsyncCodeAgent, AsyncMultiStepAgent
 from smolagents.async_models import AsyncModel
-from smolagents.default_tools import DuckDuckGoSearchTool, FinalAnswerTool, PythonInterpreterTool, VisitWebpageTool
+from smolagents.default_tools import FinalAnswerTool, PythonInterpreterTool
 from smolagents.memory import ActionStep, PlanningStep
 from smolagents.models import (
     ChatMessage,
@@ -47,7 +40,6 @@ from smolagents.models import (
     ChatMessageToolCallDefinition,
     MessageRole,
 )
-
 from smolagents.monitoring import AgentLogger, LogLevel
 from smolagents.tools import Tool, tool
 from smolagents.utils import BASE_BUILTIN_MODULES, AgentExecutionError, AgentGenerationError, AgentToolCallError
@@ -583,7 +575,8 @@ class TestMultiStepAgent:
                     raw="""I don't want to call tools today""",
                 )
 
-        agent_toolcalling = AsyncToolCallingAgent(model=FakeJsonModelNoCall(), tools=[], max_steps=1, verbosity_level=10)
+        agent_toolcalling = AsyncToolCallingAgent(model=FakeJsonModelNoCall(), tools=[], max_steps=1,
+                                                  verbosity_level=10)
         with agent_toolcalling.logger.console.capture() as capture:
             await agent_toolcalling.run("Dummy task")
         assert "don't" in capture.get() and "want" in capture.get()
@@ -616,22 +609,23 @@ class TestMultiStepAgent:
         "step, expected_messages_list",
         [
             (
-                1,
-                [
-                    [{"role": MessageRole.USER, "content": [{"type": "text", "text": "INITIAL_PLAN_USER_PROMPT"}]}],
-                ],
+                    1,
+                    [
+                        [{"role": MessageRole.USER, "content": [{"type": "text", "text": "INITIAL_PLAN_USER_PROMPT"}]}],
+                    ],
             ),
             (
-                2,
-                [
+                    2,
                     [
-                        {
-                            "role": MessageRole.SYSTEM,
-                            "content": [{"type": "text", "text": "UPDATE_PLAN_SYSTEM_PROMPT"}],
-                        },
-                        {"role": MessageRole.USER, "content": [{"type": "text", "text": "UPDATE_PLAN_USER_PROMPT"}]},
+                        [
+                            {
+                                "role": MessageRole.SYSTEM,
+                                "content": [{"type": "text", "text": "UPDATE_PLAN_SYSTEM_PROMPT"}],
+                            },
+                            {"role": MessageRole.USER,
+                             "content": [{"type": "text", "text": "UPDATE_PLAN_USER_PROMPT"}]},
+                        ],
                     ],
-                ],
             ),
         ],
     )
@@ -711,28 +705,30 @@ class TestMultiStepAgent:
         "images, expected_messages_list",
         [
             (
-                None,
-                [
+                    None,
                     [
-                        {
-                            "role": MessageRole.SYSTEM,
-                            "content": [{"type": "text", "text": "FINAL_ANSWER_SYSTEM_PROMPT"}],
-                        },
-                        {"role": MessageRole.USER, "content": [{"type": "text", "text": "FINAL_ANSWER_USER_PROMPT"}]},
-                    ]
-                ],
+                        [
+                            {
+                                "role": MessageRole.SYSTEM,
+                                "content": [{"type": "text", "text": "FINAL_ANSWER_SYSTEM_PROMPT"}],
+                            },
+                            {"role": MessageRole.USER,
+                             "content": [{"type": "text", "text": "FINAL_ANSWER_USER_PROMPT"}]},
+                        ]
+                    ],
             ),
             (
-                ["image1.png"],
-                [
+                    ["image1.png"],
                     [
-                        {
-                            "role": MessageRole.SYSTEM,
-                            "content": [{"type": "text", "text": "FINAL_ANSWER_SYSTEM_PROMPT"}, {"type": "image"}],
-                        },
-                        {"role": MessageRole.USER, "content": [{"type": "text", "text": "FINAL_ANSWER_USER_PROMPT"}]},
-                    ]
-                ],
+                        [
+                            {
+                                "role": MessageRole.SYSTEM,
+                                "content": [{"type": "text", "text": "FINAL_ANSWER_SYSTEM_PROMPT"}, {"type": "image"}],
+                            },
+                            {"role": MessageRole.USER,
+                             "content": [{"type": "text", "text": "FINAL_ANSWER_USER_PROMPT"}]},
+                        ]
+                    ],
             ),
         ],
     )
@@ -797,19 +793,19 @@ class TestMultiStepAgent:
         [
             # Valid case: no duplicates
             (
-                [MockTool("tool1"), MockTool("tool2")],
-                [MockAgent("agent1", [MockTool("tool3")])],
-                "test_agent",
-                does_not_raise(),
+                    [MockTool("tool1"), MockTool("tool2")],
+                    [MockAgent("agent1", [MockTool("tool3")])],
+                    "test_agent",
+                    does_not_raise(),
             ),
             # Invalid case: duplicate tool names
             ([MockTool("tool1"), MockTool("tool1")], [], "test_agent", pytest.raises(ValueError)),
             # Invalid case: tool name same as managed agent name
             (
-                [MockTool("tool1")],
-                [MockAgent("tool1", [MockTool("final_answer")])],
-                "test_agent",
-                pytest.raises(ValueError),
+                    [MockTool("tool1")],
+                    [MockAgent("tool1", [MockTool("final_answer")])],
+                    "test_agent",
+                    pytest.raises(ValueError),
             ),
             # Valid case: tool name same as managed agent's tool name
             ([MockTool("tool1")], [MockAgent("agent1", [MockTool("tool1")])], "test_agent", does_not_raise()),
@@ -817,13 +813,13 @@ class TestMultiStepAgent:
             ([MockTool("tool1")], [], "tool1", pytest.raises(ValueError)),
             # Valid case: duplicate tool names across managed agents
             (
-                [MockTool("tool1")],
-                [
-                    MockAgent("agent1", [MockTool("tool2"), MockTool("final_answer")]),
-                    MockAgent("agent2", [MockTool("tool2"), MockTool("final_answer")]),
-                ],
-                "test_agent",
-                does_not_raise(),
+                    [MockTool("tool1")],
+                    [
+                        MockAgent("agent1", [MockTool("tool2"), MockTool("final_answer")]),
+                        MockAgent("agent2", [MockTool("tool2"), MockTool("final_answer")]),
+                    ],
+                    "test_agent",
+                    does_not_raise(),
             ),
         ],
     )
@@ -889,7 +885,6 @@ class TestMultiStepAgent:
 
 
 class TestToolCallingAgent:
-
 
     async def test_change_tools_after_init(self):
         from smolagents import tool
@@ -1062,8 +1057,6 @@ class TestCodeAgent:
         assert "open" in agent.python_executor.static_tools
 
 
-
-
 @pytest.fixture
 def prompt_templates():
     return {
@@ -1087,7 +1080,6 @@ def prompt_templates():
         [1, 2, 3],
     ],
 )
-
 async def test_tool_calling_agents_raises_tool_call_error_being_invoked_with_wrong_arguments(arguments):
     @tool
     def _sample_tool(prompt: str) -> str:

@@ -18,11 +18,10 @@ from textwrap import dedent
 from typing import Any, Literal
 from unittest.mock import MagicMock, patch
 
+import PIL.Image
 import mcp
 import numpy as np
-import PIL.Image
 import pytest
-
 from smolagents.agent_types import _AGENT_TYPE_MAPPING
 from smolagents.tools import AUTHORIZED_TYPES, Tool, ToolCollection, launch_gradio_demo, tool
 
@@ -118,7 +117,6 @@ class TestTool:
 
     def test_tool_init_decorator_raises_issues(self):
         with pytest.raises(Exception) as e:
-
             @tool
             def coolfunc(a: str, b: int):
                 """Cool function
@@ -133,7 +131,6 @@ class TestTool:
         assert "Tool return type not found" in str(e)
 
         with pytest.raises(Exception) as e:
-
             @tool
             def coolfunc(a: str, b: int) -> int:
                 """Cool function
@@ -163,7 +160,6 @@ class TestTool:
 
         # Also test with classic definition
         with pytest.raises(Exception) as e:
-
             class GetCurrentTimeTool(Tool):
                 name = "get_current_time_tool"
                 description = "Gets the current time"
@@ -279,7 +275,6 @@ class TestTool:
 
     def test_tool_missing_class_attributes_raises_error(self):
         with pytest.raises(Exception) as e:
-
             class GetWeatherTool(Tool):
                 name = "get_weather"
                 description = "Get weather in the next days at given location."
@@ -316,7 +311,6 @@ class TestTool:
 
     def test_tool_mismatching_nullable_args_raises_error(self):
         with pytest.raises(Exception) as e:
-
             class GetWeatherTool(Tool):
                 name = "get_weather"
                 description = "Get weather in the next days at given location."
@@ -336,7 +330,6 @@ class TestTool:
         assert "Nullable" in str(e)
 
         with pytest.raises(Exception) as e:
-
             class GetWeatherTool2(Tool):
                 name = "get_weather"
                 description = "Get weather in the next days at given location."
@@ -356,7 +349,6 @@ class TestTool:
         assert "Nullable" in str(e)
 
         with pytest.raises(Exception) as e:
-
             class GetWeatherTool3(Tool):
                 name = "get_weather"
                 description = "Get weather in the next days at given location."
@@ -645,7 +637,7 @@ class TestToolCollection:
 
         try:
             with ToolCollection.from_mcp(
-                {"url": "http://127.0.0.1:8000/sse"}, trust_remote_code=True
+                    {"url": "http://127.0.0.1:8000/sse"}, trust_remote_code=True
             ) as tool_collection:
                 assert len(tool_collection.tools) == 1, "Expected 1 tool"
                 assert tool_collection.tools[0].name == "echo_tool", "Expected tool name to be 'echo_tool'"

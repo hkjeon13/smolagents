@@ -2,11 +2,10 @@ import io
 from textwrap import dedent
 from unittest.mock import MagicMock, patch
 
-import docker
 import PIL.Image
+import docker
 import pytest
 from rich.console import Console
-
 from smolagents.default_tools import WikipediaSearchTool
 from smolagents.monitoring import AgentLogger, LogLevel
 from smolagents.remote_executors import DockerExecutor, E2BExecutor, RemotePythonExecutor

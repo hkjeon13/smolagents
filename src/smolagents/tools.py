@@ -50,10 +50,8 @@ from .agent_types import handle_agent_input_types, handle_agent_output_types
 from .tool_validation import MethodChecker, validate_tool_attributes
 from .utils import BASE_BUILTIN_MODULES, _is_package_available, get_source, instance_to_source, is_valid_name
 
-
 if TYPE_CHECKING:
     import mcp
-
 
 logger = logging.getLogger(__name__)
 
@@ -156,8 +154,8 @@ class Tool:
 
         # Validate forward function signature, except for Tools that use a "generic" signature (PipelineTool, SpaceToolWrapper, LangChainToolWrapper)
         if not (
-            hasattr(self, "skip_forward_signature_validation")
-            and getattr(self, "skip_forward_signature_validation") is True
+                hasattr(self, "skip_forward_signature_validation")
+                and getattr(self, "skip_forward_signature_validation") is True
         ):
             signature = inspect.signature(self.forward)
             actual_keys = set(key for key in signature.parameters.keys() if key != "self")
@@ -327,12 +325,12 @@ class Tool:
         file_path.write_text(content, encoding="utf-8")
 
     def push_to_hub(
-        self,
-        repo_id: str,
-        commit_message: str = "Upload tool",
-        private: bool | None = None,
-        token: bool | str | None = None,
-        create_pr: bool = False,
+            self,
+            repo_id: str,
+            commit_message: str = "Upload tool",
+            private: bool | None = None,
+            token: bool | str | None = None,
+            create_pr: bool = False,
     ) -> str:
         """
         Upload the tool to the Hub.
@@ -423,11 +421,11 @@ class Tool:
 
     @classmethod
     def from_hub(
-        cls,
-        repo_id: str,
-        token: str | None = None,
-        trust_remote_code: bool = False,
-        **kwargs,
+            cls,
+            repo_id: str,
+            token: str | None = None,
+            trust_remote_code: bool = False,
+            **kwargs,
     ):
         """
         Loads a tool defined on the Hub.
@@ -502,11 +500,11 @@ class Tool:
 
     @staticmethod
     def from_space(
-        space_id: str,
-        name: str,
-        description: str,
-        api_name: str | None = None,
-        token: str | None = None,
+            space_id: str,
+            name: str,
+            description: str,
+            api_name: str | None = None,
+            token: str | None = None,
     ):
         """
         Creates a [`Tool`] from a Space given its id on the Hub.
@@ -550,12 +548,12 @@ class Tool:
             skip_forward_signature_validation = True
 
             def __init__(
-                self,
-                space_id: str,
-                name: str,
-                description: str,
-                api_name: str | None = None,
-                token: str | None = None,
+                    self,
+                    space_id: str,
+                    name: str,
+                    description: str,
+                    api_name: str | None = None,
+                    token: str | None = None,
             ):
                 self.name = name
                 self.description = description
@@ -603,9 +601,9 @@ class Tool:
                     arg.save(temp_file.name)
                     arg = temp_file.name
                 if (
-                    (isinstance(arg, str) and os.path.isfile(arg))
-                    or (isinstance(arg, Path) and arg.exists() and arg.is_file())
-                    or is_http_url_like(arg)
+                        (isinstance(arg, str) and os.path.isfile(arg))
+                        or (isinstance(arg, Path) and arg.exists() and arg.is_file())
+                        or is_http_url_like(arg)
                 ):
                     arg = handle_file(arg)
                 return arg
@@ -733,11 +731,11 @@ def launch_gradio_demo(tool: Tool):
 
 
 def load_tool(
-    repo_id,
-    model_repo_id: str | None = None,
-    token: str | None = None,
-    trust_remote_code: bool = False,
-    **kwargs,
+        repo_id,
+        model_repo_id: str | None = None,
+        token: str | None = None,
+        trust_remote_code: bool = False,
+        **kwargs,
 ):
     """
     Main function to quickly load a tool from the Hub.
@@ -803,10 +801,10 @@ class ToolCollection:
 
     @classmethod
     def from_hub(
-        cls,
-        collection_slug: str,
-        token: str | None = None,
-        trust_remote_code: bool = False,
+            cls,
+            collection_slug: str,
+            token: str | None = None,
+            trust_remote_code: bool = False,
     ) -> "ToolCollection":
         """Loads a tool collection from the Hub.
 
@@ -844,7 +842,7 @@ class ToolCollection:
     @classmethod
     @contextmanager
     def from_mcp(
-        cls, server_parameters: "mcp.StdioServerParameters" | dict, trust_remote_code: bool = False
+            cls, server_parameters: "mcp.StdioServerParameters" | dict, trust_remote_code: bool = False
     ) -> "ToolCollection":
         """Automatically load a tool collection from an MCP server.
 
@@ -959,7 +957,7 @@ def tool(tool_function: Callable) -> Tool:
     forward_method_source = f"def forward{str(new_sig)}:\n{textwrap.indent(tool_source_body, '    ')}"
     # - Create the class source
     class_source = (
-        textwrap.dedent(f"""
+            textwrap.dedent(f"""
         class SimpleTool(Tool):
             name: str = "{tool_json_schema["name"]}"
             description: str = {json.dumps(textwrap.dedent(tool_json_schema["description"]).strip())}
@@ -970,7 +968,7 @@ def tool(tool_function: Callable) -> Tool:
                 self.is_initialized = True
 
         """)
-        + textwrap.indent(forward_method_source, "    ")  # indent for class method
+            + textwrap.indent(forward_method_source, "    ")  # indent for class method
     )
     # - Store the source code on both class and method for inspection
     SimpleTool.__source__ = class_source
@@ -1029,15 +1027,15 @@ class PipelineTool(Tool):
     skip_forward_signature_validation = True
 
     def __init__(
-        self,
-        model=None,
-        pre_processor=None,
-        post_processor=None,
-        device=None,
-        device_map=None,
-        model_kwargs=None,
-        token=None,
-        **hub_kwargs,
+            self,
+            model=None,
+            pre_processor=None,
+            post_processor=None,
+            device=None,
+            device_map=None,
+            model_kwargs=None,
+            token=None,
+            **hub_kwargs,
     ):
         if not _is_package_available("accelerate") or not _is_package_available("torch"):
             raise ModuleNotFoundError(

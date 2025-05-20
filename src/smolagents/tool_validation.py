@@ -4,7 +4,6 @@ from itertools import zip_longest
 
 from .utils import BASE_BUILTIN_MODULES, get_source, is_valid_name
 
-
 _BUILTIN_NAMES = set(vars(builtins))
 
 
@@ -118,29 +117,29 @@ class MethodChecker(ast.NodeVisitor):
     def visit_Name(self, node):
         if isinstance(node.ctx, ast.Load):
             if not (
-                node.id in _BUILTIN_NAMES
-                or node.id in BASE_BUILTIN_MODULES
-                or node.id in self.arg_names
-                or node.id == "self"
-                or node.id in self.class_attributes
-                or node.id in self.imports
-                or node.id in self.from_imports
-                or node.id in self.assigned_names
-                or node.id in self.typing_names
+                    node.id in _BUILTIN_NAMES
+                    or node.id in BASE_BUILTIN_MODULES
+                    or node.id in self.arg_names
+                    or node.id == "self"
+                    or node.id in self.class_attributes
+                    or node.id in self.imports
+                    or node.id in self.from_imports
+                    or node.id in self.assigned_names
+                    or node.id in self.typing_names
             ):
                 self.errors.append(f"Name '{node.id}' is undefined.")
 
     def visit_Call(self, node):
         if isinstance(node.func, ast.Name):
             if not (
-                node.func.id in _BUILTIN_NAMES
-                or node.func.id in BASE_BUILTIN_MODULES
-                or node.func.id in self.arg_names
-                or node.func.id == "self"
-                or node.func.id in self.class_attributes
-                or node.func.id in self.imports
-                or node.func.id in self.from_imports
-                or node.func.id in self.assigned_names
+                    node.func.id in _BUILTIN_NAMES
+                    or node.func.id in BASE_BUILTIN_MODULES
+                    or node.func.id in self.arg_names
+                    or node.func.id == "self"
+                    or node.func.id in self.class_attributes
+                    or node.func.id in self.imports
+                    or node.func.id in self.from_imports
+                    or node.func.id in self.assigned_names
             ):
                 self.errors.append(f"Name '{node.func.id}' is undefined.")
         self.generic_visit(node)
@@ -189,8 +188,8 @@ def validate_tool_attributes(cls, check_imports: bool = True) -> None:
 
             # Check if the assignment is more complex than simple literals
             if not all(
-                isinstance(val, (ast.Str, ast.Num, ast.Constant, ast.Dict, ast.List, ast.Set))
-                for val in ast.walk(node.value)
+                    isinstance(val, (ast.Str, ast.Num, ast.Constant, ast.Dict, ast.List, ast.Set))
+                    for val in ast.walk(node.value)
             ):
                 for target in node.targets:
                     if isinstance(target, ast.Name):

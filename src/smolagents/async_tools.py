@@ -26,7 +26,6 @@ import tempfile
 import textwrap
 import types
 from collections.abc import Callable
-from contextlib import contextmanager
 from functools import wraps
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -35,7 +34,6 @@ from huggingface_hub import (
     CommitOperationAdd,
     create_commit,
     create_repo,
-    get_collection,
     hf_hub_download,
     metadata_update,
 )
@@ -50,10 +48,8 @@ from .agent_types import handle_agent_input_types, handle_agent_output_types
 from .tool_validation import MethodChecker, validate_tool_attributes
 from .utils import BASE_BUILTIN_MODULES, _is_package_available, get_source, instance_to_source, is_valid_name
 
-
 if TYPE_CHECKING:
-    import mcp
-
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -156,8 +152,8 @@ class AsyncTool:
 
         # Validate forward function signature, except for Tools that use a "generic" signature (PipelineTool, SpaceToolWrapper, LangChainToolWrapper)
         if not (
-            hasattr(self, "skip_forward_signature_validation")
-            and getattr(self, "skip_forward_signature_validation") is True
+                hasattr(self, "skip_forward_signature_validation")
+                and getattr(self, "skip_forward_signature_validation") is True
         ):
             signature = inspect.signature(self.forward)
             actual_keys = set(key for key in signature.parameters.keys() if key != "self")
@@ -186,7 +182,6 @@ class AsyncTool:
 
     async def forward(self, *args, **kwargs):
         return NotImplementedError("Write this method in your subclass of `Tool`.")
-
 
     async def __call__(self, *args, sanitize_inputs_outputs: bool = False, **kwargs):
         if not self.is_initialized:
@@ -328,12 +323,12 @@ class AsyncTool:
         file_path.write_text(content, encoding="utf-8")
 
     def push_to_hub(
-        self,
-        repo_id: str,
-        commit_message: str = "Upload tool",
-        private: bool | None = None,
-        token: bool | str | None = None,
-        create_pr: bool = False,
+            self,
+            repo_id: str,
+            commit_message: str = "Upload tool",
+            private: bool | None = None,
+            token: bool | str | None = None,
+            create_pr: bool = False,
     ) -> str:
         """
         Upload the tool to the Hub.
@@ -424,11 +419,11 @@ class AsyncTool:
 
     @classmethod
     def from_hub(
-        cls,
-        repo_id: str,
-        token: str | None = None,
-        trust_remote_code: bool = False,
-        **kwargs,
+            cls,
+            repo_id: str,
+            token: str | None = None,
+            trust_remote_code: bool = False,
+            **kwargs,
     ):
         """
         Loads a tool defined on the Hub.
@@ -503,11 +498,11 @@ class AsyncTool:
 
     @staticmethod
     def from_space(
-        space_id: str,
-        name: str,
-        description: str,
-        api_name: str | None = None,
-        token: str | None = None,
+            space_id: str,
+            name: str,
+            description: str,
+            api_name: str | None = None,
+            token: str | None = None,
     ):
         """
         Creates a [`Tool`] from a Space given its id on the Hub.
@@ -551,12 +546,12 @@ class AsyncTool:
             skip_forward_signature_validation = True
 
             def __init__(
-                self,
-                space_id: str,
-                name: str,
-                description: str,
-                api_name: str | None = None,
-                token: str | None = None,
+                    self,
+                    space_id: str,
+                    name: str,
+                    description: str,
+                    api_name: str | None = None,
+                    token: str | None = None,
             ):
                 self.name = name
                 self.description = description
@@ -604,9 +599,9 @@ class AsyncTool:
                     arg.save(temp_file.name)
                     arg = temp_file.name
                 if (
-                    (isinstance(arg, str) and os.path.isfile(arg))
-                    or (isinstance(arg, Path) and arg.exists() and arg.is_file())
-                    or is_http_url_like(arg)
+                        (isinstance(arg, str) and os.path.isfile(arg))
+                        or (isinstance(arg, Path) and arg.exists() and arg.is_file())
+                        or is_http_url_like(arg)
                 ):
                     arg = handle_file(arg)
                 return arg
@@ -797,7 +792,7 @@ async def async_tool(tool_function: Callable) -> AsyncTool:
     forward_method_source = f"def forward{str(new_sig)}:\n{textwrap.indent(tool_source_body, '    ')}"
     # - Create the class source
     class_source = (
-        textwrap.dedent(f"""
+            textwrap.dedent(f"""
         class SimpleTool(Tool):
             name: str = "{tool_json_schema["name"]}"
             description: str = {json.dumps(textwrap.dedent(tool_json_schema["description"]).strip())}
@@ -808,7 +803,7 @@ async def async_tool(tool_function: Callable) -> AsyncTool:
                 self.is_initialized = True
 
         """)
-        + textwrap.indent(forward_method_source, "    ")  # indent for class method
+            + textwrap.indent(forward_method_source, "    ")  # indent for class method
     )
     # - Store the source code on both class and method for inspection
     SimpleTool.__source__ = class_source
@@ -867,15 +862,15 @@ class AsyncPipelineTool(AsyncTool):
     skip_forward_signature_validation = True
 
     def __init__(
-        self,
-        model=None,
-        pre_processor=None,
-        post_processor=None,
-        device=None,
-        device_map=None,
-        model_kwargs=None,
-        token=None,
-        **hub_kwargs,
+            self,
+            model=None,
+            pre_processor=None,
+            post_processor=None,
+            device=None,
+            device_map=None,
+            model_kwargs=None,
+            token=None,
+            **hub_kwargs,
     ):
         if not _is_package_available("accelerate") or not _is_package_available("torch"):
             raise ModuleNotFoundError(

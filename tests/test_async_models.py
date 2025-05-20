@@ -13,14 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import json
-import sys
-import unittest
 from contextlib import ExitStack
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
-from huggingface_hub import ChatCompletionOutputMessage
-
+from smolagents.async_models import (
+    AsyncAzureOpenAIServerModel,
+    AsyncOpenAIServerModel,
+    AsyncModel
+)
 from smolagents.models import (
     ChatMessage,
     ChatMessageToolCall,
@@ -30,14 +31,7 @@ from smolagents.models import (
     parse_json_if_needed,
     supports_stop_parameter,
 )
-from smolagents.async_models import (
-    AsyncAzureOpenAIServerModel,
-    AsyncOpenAIServerModel,
-    AsyncModel
-)
 from smolagents.tools import tool
-
-from .utils.markers import require_run_all
 
 
 class TestModel:
@@ -129,7 +123,6 @@ class TestAsyncOpenAIServerModel:
         assert model.client == MockOpenAI.return_value
 
 
-
 class TestAsyncAzureOpenAIServerModel:
     def test_client_kwargs_passed_correctly(self):
         model_id = "gpt-3.5-turbo"
@@ -193,24 +186,24 @@ def test_get_clean_message_list_role_conversions():
     "convert_images_to_image_urls, expected_clean_message",
     [
         (
-            False,
-            {
-                "role": "user",
-                "content": [
-                    {"type": "image", "image": "encoded_image"},
-                    {"type": "image", "image": "second_encoded_image"},
-                ],
-            },
+                False,
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "image", "image": "encoded_image"},
+                        {"type": "image", "image": "second_encoded_image"},
+                    ],
+                },
         ),
         (
-            True,
-            {
-                "role": "user",
-                "content": [
-                    {"type": "image_url", "image_url": {"url": "data:image/png;base64,encoded_image"}},
-                    {"type": "image_url", "image_url": {"url": "data:image/png;base64,second_encoded_image"}},
-                ],
-            },
+                True,
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "image_url", "image_url": {"url": "data:image/png;base64,encoded_image"}},
+                        {"type": "image_url", "image_url": {"url": "data:image/png;base64,second_encoded_image"}},
+                    ],
+                },
         ),
     ],
 )
@@ -251,7 +244,7 @@ def test_get_clean_message_list_flatten_messages_as_text():
     ],
 )
 def test_flatten_messages_as_text_for_all_models(
-    model_class, model_kwargs, patching, expected_flatten_messages_as_text
+        model_class, model_kwargs, patching, expected_flatten_messages_as_text
 ):
     with ExitStack() as stack:
         if isinstance(patching, list):

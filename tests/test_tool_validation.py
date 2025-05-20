@@ -2,11 +2,9 @@ import ast
 from textwrap import dedent
 
 import pytest
-
 from smolagents.default_tools import DuckDuckGoSearchTool, GoogleSearchTool, SpeechToTextTool, VisitWebpageTool
 from smolagents.tool_validation import MethodChecker, validate_tool_attributes
 from smolagents.tools import Tool, tool
-
 
 UNDEFINED_VARIABLE = "undefined_variable"
 
@@ -116,14 +114,14 @@ class InvalidToolUndefinedNames(Tool):
     "tool_class, expected_error",
     [
         (
-            InvalidToolName,
-            "Class attribute 'name' must be a valid Python identifier and not a reserved keyword, found 'invalid tool name'",
+                InvalidToolName,
+                "Class attribute 'name' must be a valid Python identifier and not a reserved keyword, found 'invalid tool name'",
         ),
         (InvalidToolComplexAttrs, "Complex attributes should be defined in __init__, not as class attributes"),
         (InvalidToolRequiredParams, "Parameters in __init__ must have default values, found required parameters"),
         (
-            InvalidToolNonLiteralDefaultParam,
-            "Parameters in __init__ must have literal default values, found non-literal defaults",
+                InvalidToolNonLiteralDefaultParam,
+                "Parameters in __init__ must have literal default values, found non-literal defaults",
         ),
         (InvalidToolUndefinedNames, "Name 'UNDEFINED_VARIABLE' is undefined"),
     ],

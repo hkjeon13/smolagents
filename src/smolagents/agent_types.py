@@ -24,7 +24,6 @@ import requests
 
 from .utils import _is_package_available
 
-
 logger = logging.getLogger(__name__)
 
 

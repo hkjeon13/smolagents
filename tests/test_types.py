@@ -18,11 +18,10 @@ import unittest
 import uuid
 
 import PIL.Image
+from smolagents.agent_types import AgentAudio, AgentImage, AgentText
 from transformers.testing_utils import (
     require_soundfile,
 )
-
-from smolagents.agent_types import AgentAudio, AgentImage, AgentText
 
 from .utils.markers import require_torch
 

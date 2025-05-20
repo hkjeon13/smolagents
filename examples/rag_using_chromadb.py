@@ -4,16 +4,13 @@ import datasets
 from langchain.docstore.document import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
-
 # from langchain_community.document_loaders import PyPDFLoader
 from langchain_huggingface import HuggingFaceEmbeddings
-from tqdm import tqdm
-from transformers import AutoTokenizer
-
 # from langchain_openai import OpenAIEmbeddings
 from smolagents import LiteLLMModel, Tool
 from smolagents.agents import CodeAgent
-
+from tqdm import tqdm
+from transformers import AutoTokenizer
 
 # from smolagents.agents import ToolCallingAgent
 
@@ -57,11 +54,9 @@ for doc in tqdm(source_docs):
             unique_texts[new_doc.page_content] = True
             docs_processed.append(new_doc)
 
-
 print("Embedding documents... This should take a few minutes (5 minutes on MacBook with M1 Pro)")
 # Initialize embeddings and ChromaDB vector store
 embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-
 
 # embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
 
@@ -124,7 +119,6 @@ agent = CodeAgent(
 )
 
 agent_output = agent.run("How can I push a model to the Hub?")
-
 
 print("Final output:")
 print(agent_output)

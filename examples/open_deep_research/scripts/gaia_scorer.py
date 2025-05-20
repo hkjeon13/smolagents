@@ -16,8 +16,8 @@ def normalize_number_str(number_str: str) -> float:
 
 
 def split_string(
-    s: str,
-    char_list: list[str] = [",", ";"],
+        s: str,
+        char_list: list[str] = [",", ";"],
 ) -> list[str]:
     pattern = f"[{''.join(char_list)}]"
     return re.split(pattern, s)
@@ -32,8 +32,8 @@ def is_float(element: any) -> bool:
 
 
 def question_scorer(
-    model_answer: str,
-    ground_truth: str,
+        model_answer: str,
+        ground_truth: str,
 ) -> bool:
     # if gt is a number
     if is_float(ground_truth):
@@ -92,8 +92,8 @@ def check_close_call(prediction, true_answer, is_correct):
             return is_correct
         else:
             if (
-                check_prediction_contains_answer_letters_in_order(str(prediction), str(true_answer))
-                and len(str(true_answer)) * 0.5 <= len(str(prediction)) <= len(str(true_answer)) * 2
+                    check_prediction_contains_answer_letters_in_order(str(prediction), str(true_answer))
+                    and len(str(true_answer)) * 0.5 <= len(str(prediction)) <= len(str(true_answer)) * 2
             ):
                 print(f"Close call: {prediction} vs {true_answer}")
                 return True

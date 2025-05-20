@@ -27,7 +27,6 @@ from typing import TYPE_CHECKING, Any
 from .tools import Tool
 from .utils import _is_package_available, encode_image_base64, make_image_url, parse_json_blob
 
-
 if TYPE_CHECKING:
     from huggingface_hub import (
         ChatCompletionOutputFunctionDefinition,
@@ -35,7 +34,6 @@ if TYPE_CHECKING:
         ChatCompletionOutputToolCall,
     )
     from transformers import StoppingCriteriaList
-
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +65,7 @@ class ChatMessageToolCallDefinition:
 
     @classmethod
     def from_hf_api(
-        cls, tool_call_definition: "ChatCompletionOutputFunctionDefinition"
+            cls, tool_call_definition: "ChatCompletionOutputFunctionDefinition"
     ) -> "ChatMessageToolCallDefinition":
         warnings.warn(
             "ChatMessageToolCallDefinition.from_hf_api is deprecated and will be removed in version 1.16.0. "
@@ -186,16 +184,16 @@ def get_tool_json_schema(tool: Tool) -> dict:
 
 def remove_stop_sequences(content: str, stop_sequences: list[str]) -> str:
     for stop_seq in stop_sequences:
-        if content[-len(stop_seq) :] == stop_seq:
+        if content[-len(stop_seq):] == stop_seq:
             content = content[: -len(stop_seq)]
     return content
 
 
 def get_clean_message_list(
-    message_list: list[dict[str, str | list[dict]]],
-    role_conversions: dict[MessageRole, MessageRole] | dict[str, str] = {},
-    convert_images_to_image_urls: bool = False,
-    flatten_messages_as_text: bool = False,
+        message_list: list[dict[str, str | list[dict]]],
+        role_conversions: dict[MessageRole, MessageRole] | dict[str, str] = {},
+        convert_images_to_image_urls: bool = False,
+        flatten_messages_as_text: bool = False,
 ) -> list[dict[str, str | list[dict]]]:
     """
     Subsequent messages with the same role will be concatenated to a single message.
@@ -290,12 +288,12 @@ def supports_stop_parameter(model_id: str) -> bool:
 
 class Model:
     def __init__(
-        self,
-        flatten_messages_as_text: bool = False,
-        tool_name_key: str = "name",
-        tool_arguments_key: str = "arguments",
-        model_id: str | None = None,
-        **kwargs,
+            self,
+            flatten_messages_as_text: bool = False,
+            tool_name_key: str = "name",
+            tool_arguments_key: str = "arguments",
+            model_id: str | None = None,
+            **kwargs,
     ):
         self.flatten_messages_as_text = flatten_messages_as_text
         self.tool_name_key = tool_name_key
@@ -306,14 +304,14 @@ class Model:
         self.model_id: str | None = model_id
 
     def _prepare_completion_kwargs(
-        self,
-        messages: list[dict[str, str | list[dict]]],
-        stop_sequences: list[str] | None = None,
-        grammar: str | None = None,
-        tools_to_call_from: list[Tool] | None = None,
-        custom_role_conversions: dict[str, str] | None = None,
-        convert_images_to_image_urls: bool = False,
-        **kwargs,
+            self,
+            messages: list[dict[str, str | list[dict]]],
+            stop_sequences: list[str] | None = None,
+            grammar: str | None = None,
+            tools_to_call_from: list[Tool] | None = None,
+            custom_role_conversions: dict[str, str] | None = None,
+            convert_images_to_image_urls: bool = False,
+            **kwargs,
     ) -> dict[str, Any]:
         """
         Prepare parameters required for model invocation, handling parameter priorities.
@@ -368,12 +366,12 @@ class Model:
         }
 
     def generate(
-        self,
-        messages: list[dict[str, str | list[dict]]],
-        stop_sequences: list[str] | None = None,
-        grammar: str | None = None,
-        tools_to_call_from: list[Tool] | None = None,
-        **kwargs,
+            self,
+            messages: list[dict[str, str | list[dict]]],
+            stop_sequences: list[str] | None = None,
+            grammar: str | None = None,
+            tools_to_call_from: list[Tool] | None = None,
+            **kwargs,
     ) -> ChatMessage:
         """Process the input messages and return the model's response.
 
@@ -470,10 +468,10 @@ class VLLMModel(Model):
     """
 
     def __init__(
-        self,
-        model_id,
-        model_kwargs: dict[str, Any] | None = None,
-        **kwargs,
+            self,
+            model_id,
+            model_kwargs: dict[str, Any] | None = None,
+            **kwargs,
     ):
         if not _is_package_available("vllm"):
             raise ModuleNotFoundError("Please install 'vllm' extra to use VLLMModel: `pip install 'smolagents[vllm]'`")
@@ -507,12 +505,12 @@ class VLLMModel(Model):
         torch.cuda.empty_cache()
 
     def generate(
-        self,
-        messages: list[dict[str, str | list[dict]]],
-        stop_sequences: list[str] | None = None,
-        grammar: str | None = None,
-        tools_to_call_from: list[Tool] | None = None,
-        **kwargs,
+            self,
+            messages: list[dict[str, str | list[dict]]],
+            stop_sequences: list[str] | None = None,
+            grammar: str | None = None,
+            tools_to_call_from: list[Tool] | None = None,
+            **kwargs,
     ) -> ChatMessage:
         from vllm import SamplingParams  # type: ignore
 
@@ -602,12 +600,12 @@ class MLXModel(Model):
     """
 
     def __init__(
-        self,
-        model_id: str,
-        tool_name_key: str = "name",
-        tool_arguments_key: str = "arguments",
-        trust_remote_code: bool = False,
-        **kwargs,
+            self,
+            model_id: str,
+            tool_name_key: str = "name",
+            tool_arguments_key: str = "arguments",
+            trust_remote_code: bool = False,
+            **kwargs,
     ):
         super().__init__(
             flatten_messages_as_text=True, model_id=model_id, **kwargs
@@ -626,12 +624,12 @@ class MLXModel(Model):
         self.is_vlm = False  # mlx-lm doesn't support vision models
 
     def generate(
-        self,
-        messages: list[dict[str, str | list[dict]]],
-        stop_sequences: list[str] | None = None,
-        grammar: str | None = None,
-        tools_to_call_from: list[Tool] | None = None,
-        **kwargs,
+            self,
+            messages: list[dict[str, str | list[dict]]],
+            stop_sequences: list[str] | None = None,
+            grammar: str | None = None,
+            tools_to_call_from: list[Tool] | None = None,
+            **kwargs,
     ) -> ChatMessage:
         completion_kwargs = self._prepare_completion_kwargs(
             messages=messages,
@@ -707,12 +705,12 @@ class TransformersModel(Model):
     """
 
     def __init__(
-        self,
-        model_id: str | None = None,
-        device_map: str | None = None,
-        torch_dtype: str | None = None,
-        trust_remote_code: bool = False,
-        **kwargs,
+            self,
+            model_id: str | None = None,
+            device_map: str | None = None,
+            torch_dtype: str | None = None,
+            trust_remote_code: bool = False,
+            **kwargs,
     ):
         try:
             import torch
@@ -758,7 +756,8 @@ class TransformersModel(Model):
             )
             self.processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=trust_remote_code)
             self._is_vlm = True
-            self.streamer = TextIteratorStreamer(self.processor.tokenizer, skip_prompt=True, skip_special_tokens=True)  # type: ignore
+            self.streamer = TextIteratorStreamer(self.processor.tokenizer, skip_prompt=True,
+                                                 skip_special_tokens=True)  # type: ignore
 
         except ValueError as e:
             if "Unrecognized configuration class" in str(e):
@@ -769,7 +768,8 @@ class TransformersModel(Model):
                     trust_remote_code=trust_remote_code,
                 )
                 self.tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=trust_remote_code)
-                self.streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True)  # type: ignore
+                self.streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True,
+                                                     skip_special_tokens=True)  # type: ignore
             else:
                 raise e
         except Exception as e:
@@ -798,12 +798,12 @@ class TransformersModel(Model):
         return StoppingCriteriaList([StopOnStrings(stop_sequences, tokenizer)])
 
     def _prepare_completion_args(
-        self,
-        messages: list[dict[str, str | list[dict]]],
-        stop_sequences: list[str] | None = None,
-        grammar: str | None = None,
-        tools_to_call_from: list[Tool] | None = None,
-        **kwargs,
+            self,
+            messages: list[dict[str, str | list[dict]]],
+            stop_sequences: list[str] | None = None,
+            grammar: str | None = None,
+            tools_to_call_from: list[Tool] | None = None,
+            **kwargs,
     ) -> dict[str, Any]:
         completion_kwargs = self._prepare_completion_kwargs(
             messages=messages,
@@ -816,11 +816,11 @@ class TransformersModel(Model):
         stop_sequences = completion_kwargs.pop("stop", None)
 
         max_new_tokens = (
-            kwargs.get("max_new_tokens")
-            or kwargs.get("max_tokens")
-            or self.kwargs.get("max_new_tokens")
-            or self.kwargs.get("max_tokens")
-            or 1024
+                kwargs.get("max_new_tokens")
+                or kwargs.get("max_tokens")
+                or self.kwargs.get("max_new_tokens")
+                or self.kwargs.get("max_tokens")
+                or 1024
         )
         prompt_tensor = (self.processor if hasattr(self, "processor") else self.tokenizer).apply_chat_template(
             messages,  # type: ignore
@@ -847,12 +847,12 @@ class TransformersModel(Model):
         )
 
     def generate(
-        self,
-        messages: list[dict[str, str | list[dict]]],
-        stop_sequences: list[str] | None = None,
-        grammar: str | None = None,
-        tools_to_call_from: list[Tool] | None = None,
-        **kwargs,
+            self,
+            messages: list[dict[str, str | list[dict]]],
+            stop_sequences: list[str] | None = None,
+            grammar: str | None = None,
+            tools_to_call_from: list[Tool] | None = None,
+            **kwargs,
     ) -> ChatMessage:
         generation_kwargs = self._prepare_completion_args(
             messages=messages,
@@ -886,12 +886,12 @@ class TransformersModel(Model):
         )
 
     def generate_stream(
-        self,
-        messages: list[dict[str, str | list[dict]]],
-        stop_sequences: list[str] | None = None,
-        grammar: str | None = None,
-        tools_to_call_from: list[Tool] | None = None,
-        **kwargs,
+            self,
+            messages: list[dict[str, str | list[dict]]],
+            stop_sequences: list[str] | None = None,
+            grammar: str | None = None,
+            tools_to_call_from: list[Tool] | None = None,
+            **kwargs,
     ) -> Generator[ChatMessageStreamDelta]:
         generation_kwargs = self._prepare_completion_args(
             messages=messages,
@@ -935,7 +935,8 @@ class ApiModel(Model):
     """
 
     def __init__(
-        self, model_id: str, custom_role_conversions: dict[str, str] | None = None, client: Any | None = None, **kwargs
+            self, model_id: str, custom_role_conversions: dict[str, str] | None = None, client: Any | None = None,
+            **kwargs
     ):
         super().__init__(model_id=model_id, **kwargs)
         self.custom_role_conversions = custom_role_conversions or {}
@@ -966,13 +967,13 @@ class LiteLLMModel(ApiModel):
     """
 
     def __init__(
-        self,
-        model_id: str | None = None,
-        api_base: str | None = None,
-        api_key: str | None = None,
-        custom_role_conversions: dict[str, str] | None = None,
-        flatten_messages_as_text: bool | None = None,
-        **kwargs,
+            self,
+            model_id: str | None = None,
+            api_base: str | None = None,
+            api_key: str | None = None,
+            custom_role_conversions: dict[str, str] | None = None,
+            flatten_messages_as_text: bool | None = None,
+            **kwargs,
     ):
         if not model_id:
             warnings.warn(
@@ -1008,12 +1009,12 @@ class LiteLLMModel(ApiModel):
         return litellm
 
     def generate(
-        self,
-        messages: list[dict[str, str | list[dict]]],
-        stop_sequences: list[str] | None = None,
-        grammar: str | None = None,
-        tools_to_call_from: list[Tool] | None = None,
-        **kwargs,
+            self,
+            messages: list[dict[str, str | list[dict]]],
+            stop_sequences: list[str] | None = None,
+            grammar: str | None = None,
+            tools_to_call_from: list[Tool] | None = None,
+            **kwargs,
     ) -> ChatMessage:
         completion_kwargs = self._prepare_completion_kwargs(
             messages=messages,
@@ -1038,12 +1039,12 @@ class LiteLLMModel(ApiModel):
         )
 
     def generate_stream(
-        self,
-        messages: list[dict[str, str | list[dict]]],
-        stop_sequences: list[str] | None = None,
-        grammar: str | None = None,
-        tools_to_call_from: list[Tool] | None = None,
-        **kwargs,
+            self,
+            messages: list[dict[str, str | list[dict]]],
+            stop_sequences: list[str] | None = None,
+            grammar: str | None = None,
+            tools_to_call_from: list[Tool] | None = None,
+            **kwargs,
     ) -> Generator[ChatMessageStreamDelta]:
         if tools_to_call_from:
             raise NotImplementedError("Streaming is not yet supported for tool calling")
@@ -1135,13 +1136,13 @@ class LiteLLMRouterModel(LiteLLMModel):
     """
 
     def __init__(
-        self,
-        model_id: str,
-        model_list: list[dict[str, Any]],
-        client_kwargs: dict[str, Any] | None = None,
-        custom_role_conversions: dict[str, str] | None = None,
-        flatten_messages_as_text: bool | None = None,
-        **kwargs,
+            self,
+            model_id: str,
+            model_list: list[dict[str, Any]],
+            client_kwargs: dict[str, Any] | None = None,
+            custom_role_conversions: dict[str, str] | None = None,
+            flatten_messages_as_text: bool | None = None,
+            **kwargs,
     ):
         self.client_kwargs = {
             "model_list": model_list,
@@ -1219,16 +1220,16 @@ class InferenceClientModel(ApiModel):
     """
 
     def __init__(
-        self,
-        model_id: str = "Qwen/Qwen2.5-Coder-32B-Instruct",
-        provider: str | None = None,
-        token: str | None = None,
-        timeout: int = 120,
-        client_kwargs: dict[str, Any] | None = None,
-        custom_role_conversions: dict[str, str] | None = None,
-        api_key: str | None = None,
-        bill_to: str | None = None,
-        **kwargs,
+            self,
+            model_id: str = "Qwen/Qwen2.5-Coder-32B-Instruct",
+            provider: str | None = None,
+            token: str | None = None,
+            timeout: int = 120,
+            client_kwargs: dict[str, Any] | None = None,
+            custom_role_conversions: dict[str, str] | None = None,
+            api_key: str | None = None,
+            bill_to: str | None = None,
+            **kwargs,
     ):
         if token is not None and api_key is not None:
             raise ValueError(
@@ -1256,12 +1257,12 @@ class InferenceClientModel(ApiModel):
         return InferenceClient(**self.client_kwargs)
 
     def generate(
-        self,
-        messages: list[dict[str, str | list[dict]]],
-        stop_sequences: list[str] | None = None,
-        grammar: str | None = None,
-        tools_to_call_from: list[Tool] | None = None,
-        **kwargs,
+            self,
+            messages: list[dict[str, str | list[dict]]],
+            stop_sequences: list[str] | None = None,
+            grammar: str | None = None,
+            tools_to_call_from: list[Tool] | None = None,
+            **kwargs,
     ) -> ChatMessage:
         completion_kwargs = self._prepare_completion_kwargs(
             messages=messages,
@@ -1279,12 +1280,12 @@ class InferenceClientModel(ApiModel):
         return ChatMessage.from_dict(asdict(response.choices[0].message), raw=response)
 
     def generate_stream(
-        self,
-        messages: list[dict[str, str | list[dict]]],
-        stop_sequences: list[str] | None = None,
-        grammar: str | None = None,
-        tools_to_call_from: list[Tool] | None = None,
-        **kwargs,
+            self,
+            messages: list[dict[str, str | list[dict]]],
+            stop_sequences: list[str] | None = None,
+            grammar: str | None = None,
+            tools_to_call_from: list[Tool] | None = None,
+            **kwargs,
     ) -> Generator[ChatMessageStreamDelta]:
         if tools_to_call_from:
             raise NotImplementedError("Streaming is not yet supported for tool calling")
@@ -1299,7 +1300,7 @@ class InferenceClientModel(ApiModel):
             **kwargs,
         )
         for event in self.client.chat.completions.create(
-            **completion_kwargs, stream=True, stream_options={"include_usage": True}
+                **completion_kwargs, stream=True, stream_options={"include_usage": True}
         ):
             if event.choices:
                 if event.choices[0].delta is None:
@@ -1349,16 +1350,16 @@ class OpenAIServerModel(ApiModel):
     """
 
     def __init__(
-        self,
-        model_id: str,
-        api_base: str | None = None,
-        api_key: str | None = None,
-        organization: str | None = None,
-        project: str | None = None,
-        client_kwargs: dict[str, Any] | None = None,
-        custom_role_conversions: dict[str, str] | None = None,
-        flatten_messages_as_text: bool = False,
-        **kwargs,
+            self,
+            model_id: str,
+            api_base: str | None = None,
+            api_key: str | None = None,
+            organization: str | None = None,
+            project: str | None = None,
+            client_kwargs: dict[str, Any] | None = None,
+            custom_role_conversions: dict[str, str] | None = None,
+            flatten_messages_as_text: bool = False,
+            **kwargs,
     ):
         self.client_kwargs = {
             **(client_kwargs or {}),
@@ -1385,12 +1386,12 @@ class OpenAIServerModel(ApiModel):
         return openai.OpenAI(**self.client_kwargs)
 
     def generate_stream(
-        self,
-        messages: list[dict[str, str | list[dict]]],
-        stop_sequences: list[str] | None = None,
-        grammar: str | None = None,
-        tools_to_call_from: list[Tool] | None = None,
-        **kwargs,
+            self,
+            messages: list[dict[str, str | list[dict]]],
+            stop_sequences: list[str] | None = None,
+            grammar: str | None = None,
+            tools_to_call_from: list[Tool] | None = None,
+            **kwargs,
     ) -> Generator[ChatMessageStreamDelta]:
         if tools_to_call_from:
             raise NotImplementedError("Streaming is not yet supported for tool calling")
@@ -1405,7 +1406,7 @@ class OpenAIServerModel(ApiModel):
             **kwargs,
         )
         for event in self.client.chat.completions.create(
-            **completion_kwargs, stream=True, stream_options={"include_usage": True}
+                **completion_kwargs, stream=True, stream_options={"include_usage": True}
         ):
             if event.choices:
                 if event.choices[0].delta is None:
@@ -1420,12 +1421,12 @@ class OpenAIServerModel(ApiModel):
                 self.last_output_token_count = event.usage.completion_tokens
 
     def generate(
-        self,
-        messages: list[dict[str, str | list[dict]]],
-        stop_sequences: list[str] | None = None,
-        grammar: str | None = None,
-        tools_to_call_from: list[Tool] | None = None,
-        **kwargs,
+            self,
+            messages: list[dict[str, str | list[dict]]],
+            stop_sequences: list[str] | None = None,
+            grammar: str | None = None,
+            tools_to_call_from: list[Tool] | None = None,
+            **kwargs,
     ) -> ChatMessage:
         completion_kwargs = self._prepare_completion_kwargs(
             messages=messages,
@@ -1469,14 +1470,14 @@ class AzureOpenAIServerModel(OpenAIServerModel):
     """
 
     def __init__(
-        self,
-        model_id: str,
-        azure_endpoint: str | None = None,
-        api_key: str | None = None,
-        api_version: str | None = None,
-        client_kwargs: dict[str, Any] | None = None,
-        custom_role_conversions: dict[str, str] | None = None,
-        **kwargs,
+            self,
+            model_id: str,
+            azure_endpoint: str | None = None,
+            api_key: str | None = None,
+            api_version: str | None = None,
+            client_kwargs: dict[str, Any] | None = None,
+            custom_role_conversions: dict[str, str] | None = None,
+            **kwargs,
     ):
         client_kwargs = client_kwargs or {}
         client_kwargs.update(
@@ -1566,12 +1567,12 @@ class AmazonBedrockServerModel(ApiModel):
     """
 
     def __init__(
-        self,
-        model_id: str,
-        client=None,
-        client_kwargs: dict[str, Any] | None = None,
-        custom_role_conversions: dict[str, str] | None = None,
-        **kwargs,
+            self,
+            model_id: str,
+            client=None,
+            client_kwargs: dict[str, Any] | None = None,
+            custom_role_conversions: dict[str, str] | None = None,
+            **kwargs,
     ):
         self.client_kwargs = client_kwargs or {}
 
@@ -1594,14 +1595,14 @@ class AmazonBedrockServerModel(ApiModel):
         )
 
     def _prepare_completion_kwargs(
-        self,
-        messages: list[dict[str, str | list[dict]]],
-        stop_sequences: list[str] | None = None,
-        grammar: str | None = None,
-        tools_to_call_from: list[Tool] | None = None,
-        custom_role_conversions: dict[str, str] | None = None,
-        convert_images_to_image_urls: bool = False,
-        **kwargs,
+            self,
+            messages: list[dict[str, str | list[dict]]],
+            stop_sequences: list[str] | None = None,
+            grammar: str | None = None,
+            tools_to_call_from: list[Tool] | None = None,
+            custom_role_conversions: dict[str, str] | None = None,
+            convert_images_to_image_urls: bool = False,
+            **kwargs,
     ) -> dict:
         """
         Overrides the base method to handle Bedrock-specific configurations.
@@ -1647,12 +1648,12 @@ class AmazonBedrockServerModel(ApiModel):
         return boto3.client("bedrock-runtime", **self.client_kwargs)
 
     def generate(
-        self,
-        messages: list[dict[str, str | list[dict]]],
-        stop_sequences: list[str] | None = None,
-        grammar: str | None = None,
-        tools_to_call_from: list[Tool] | None = None,
-        **kwargs,
+            self,
+            messages: list[dict[str, str | list[dict]]],
+            stop_sequences: list[str] | None = None,
+            grammar: str | None = None,
+            tools_to_call_from: list[Tool] | None = None,
+            **kwargs,
     ) -> ChatMessage:
         completion_kwargs: dict = self._prepare_completion_kwargs(
             messages=messages,

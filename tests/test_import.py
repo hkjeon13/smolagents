@@ -24,8 +24,8 @@ def test_import_smolagents_without_extras(monkeypatch):
 
     # Check if the import was successful
     assert result.returncode == 0, (
-        "Import failed with error: "
-        + (result.stderr.splitlines()[-1] if result.stderr else "No error message")
-        + "\n"
-        + result.stderr
+            "Import failed with error: "
+            + (result.stderr.splitlines()[-1] if result.stderr else "No error message")
+            + "\n"
+            + result.stderr
     )

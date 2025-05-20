@@ -18,10 +18,8 @@ import argparse
 import os
 
 from dotenv import load_dotenv
-
 from smolagents import CodeAgent, InferenceClientModel, LiteLLMModel, Model, OpenAIServerModel, Tool, TransformersModel
 from smolagents.default_tools import TOOL_MAPPING
-
 
 leopard_prompt = "How many seconds would it take for a leopard at full speed to run through Pont des Arts?"
 
@@ -86,11 +84,11 @@ def parse_arguments():
 
 
 def load_model(
-    model_type: str,
-    model_id: str,
-    api_base: str | None = None,
-    api_key: str | None = None,
-    provider: str | None = None,
+        model_type: str,
+        model_id: str,
+        api_base: str | None = None,
+        api_key: str | None = None,
+        provider: str | None = None,
 ) -> Model:
     if model_type == "OpenAIServerModel":
         return OpenAIServerModel(
@@ -117,14 +115,14 @@ def load_model(
 
 
 def run_smolagent(
-    prompt: str,
-    tools: list[str],
-    model_type: str,
-    model_id: str,
-    api_base: str | None = None,
-    api_key: str | None = None,
-    imports: list[str] | None = None,
-    provider: str | None = None,
+        prompt: str,
+        tools: list[str],
+        model_type: str,
+        model_id: str,
+        api_base: str | None = None,
+        api_key: str | None = None,
+        imports: list[str] | None = None,
+        provider: str | None = None,
 ) -> None:
     load_dotenv()
 

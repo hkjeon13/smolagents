@@ -9,9 +9,7 @@ import PIL.Image
 import requests
 from dotenv import load_dotenv
 from huggingface_hub import InferenceClient
-
 from smolagents import Tool, tool
-
 
 load_dotenv(override=True)
 

@@ -1,6 +1,5 @@
 from smolagents import CodeAgent, GradioUI, InferenceClientModel
 
-
 agent = CodeAgent(
     tools=[],
     model=InferenceClientModel(),

@@ -15,7 +15,6 @@
 from typing import Any
 
 import pytest
-
 from smolagents._function_type_hints_utils import DocstringParsingException, get_imports, get_json_schema
 
 
@@ -400,12 +399,12 @@ class TestGetJsonSchema:
         assert schema["function"]["parameters"]["properties"]["y"]["type"] == "number"
         # Description should be extracted correctly
         assert (
-            schema["function"]["parameters"]["properties"]["x"]["description"]
-            == "An integer parameter with type in docstring."
+                schema["function"]["parameters"]["properties"]["x"]["description"]
+                == "An integer parameter with type in docstring."
         )
         assert (
-            schema["function"]["parameters"]["properties"]["y"]["description"]
-            == "A float parameter with type in docstring."
+                schema["function"]["parameters"]["properties"]["y"]["description"]
+                == "A float parameter with type in docstring."
         )
         # Return type and description should be correct
         assert schema["function"]["return"]["type"] == "number"
@@ -457,56 +456,56 @@ class TestGetCode:
         "code, expected",
         [
             (
-                """
-        import numpy
-        import pandas
-        """,
-                ["numpy", "pandas"],
+                    """
+            import numpy
+            import pandas
+            """,
+                    ["numpy", "pandas"],
             ),
             # From imports
             (
-                """
-        from torch import nn
-        from transformers import AutoModel
-        """,
-                ["torch", "transformers"],
+                    """
+            from torch import nn
+            from transformers import AutoModel
+            """,
+                    ["torch", "transformers"],
             ),
             # Mixed case with nested imports
             (
-                """
-        import numpy as np
-        from torch.nn import Linear
-        import os.path
-        """,
-                ["numpy", "torch", "os"],
+                    """
+            import numpy as np
+            from torch.nn import Linear
+            import os.path
+            """,
+                    ["numpy", "torch", "os"],
             ),
             # Try/except block (should be filtered)
             (
-                """
-        try:
-            import torch
-        except ImportError:
-            pass
-        import numpy
-        """,
-                ["numpy"],
+                    """
+            try:
+                import torch
+            except ImportError:
+                pass
+            import numpy
+            """,
+                    ["numpy"],
             ),
             # Flash attention block (should be filtered)
             (
-                """
-        if is_flash_attn_2_available():
-            from flash_attn import flash_attn_func
-        import transformers
-        """,
-                ["transformers"],
+                    """
+            if is_flash_attn_2_available():
+                from flash_attn import flash_attn_func
+            import transformers
+            """,
+                    ["transformers"],
             ),
             # Relative imports (should be excluded)
             (
-                """
-        from .utils import helper
-        from ..models import transformer
-        """,
-                [],
+                    """
+            from .utils import helper
+            from ..models import transformer
+            """,
+                    [],
             ),
         ],
     )

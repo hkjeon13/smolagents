@@ -4,6 +4,14 @@ import threading
 
 from dotenv import load_dotenv
 from huggingface_hub import login
+from smolagents import (
+    CodeAgent,
+    GoogleSearchTool,
+    # InferenceClientModel,
+    LiteLLMModel,
+    ToolCallingAgent,
+)
+
 from scripts.text_inspector_tool import TextInspectorTool
 from scripts.text_web_browser import (
     ArchiveSearchTool,
@@ -15,15 +23,6 @@ from scripts.text_web_browser import (
     VisitTool,
 )
 from scripts.visual_qa import visualizer
-
-from smolagents import (
-    CodeAgent,
-    GoogleSearchTool,
-    # InferenceClientModel,
-    LiteLLMModel,
-    ToolCallingAgent,
-)
-
 
 load_dotenv(override=True)
 login(os.getenv("HF_TOKEN"))

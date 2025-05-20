@@ -32,7 +32,6 @@ from .monitoring import LogLevel
 from .tools import Tool, get_tools_definition_code
 from .utils import AgentError
 
-
 try:
     from dotenv import load_dotenv
 
@@ -163,14 +162,14 @@ class DockerExecutor(RemotePythonExecutor):
     """
 
     def __init__(
-        self,
-        additional_imports: list[str],
-        logger,
-        host: str = "127.0.0.1",
-        port: int = 8888,
-        image_name: str = "jupyter-kernel",
-        build_new_image: bool = True,
-        container_run_kwargs: dict[str, Any] | None = None,
+            self,
+            additional_imports: list[str],
+            logger,
+            host: str = "127.0.0.1",
+            port: int = 8888,
+            image_name: str = "jupyter-kernel",
+            build_new_image: bool = True,
+            container_run_kwargs: dict[str, Any] | None = None,
     ):
         """
         Initialize the Docker-based Jupyter Kernel Gateway executor.
@@ -325,7 +324,7 @@ class DockerExecutor(RemotePythonExecutor):
                 if msg_type == "stream":
                     text = msg["content"]["text"]
                     if return_final_answer and text.startswith("RESULT_PICKLE:"):
-                        pickle_data = text[len("RESULT_PICKLE:") :].strip()
+                        pickle_data = text[len("RESULT_PICKLE:"):].strip()
                         result = pickle.loads(base64.b64decode(pickle_data))
                         waiting_for_idle = True
                     else:

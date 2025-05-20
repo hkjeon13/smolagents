@@ -15,7 +15,6 @@
 import unittest
 
 import pytest
-
 from smolagents.agent_types import _AGENT_TYPE_MAPPING
 from smolagents.default_tools import (
     DuckDuckGoSearchTool,

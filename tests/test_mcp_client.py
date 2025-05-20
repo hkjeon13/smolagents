@@ -2,7 +2,6 @@ from textwrap import dedent
 
 import pytest
 from mcp import StdioServerParameters
-
 from smolagents.mcp_client import MCPClient
 
 

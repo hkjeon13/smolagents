@@ -16,7 +16,6 @@
 import unittest
 
 import pytest
-
 from smolagents import (
     AgentImage,
     CodeAgent,
