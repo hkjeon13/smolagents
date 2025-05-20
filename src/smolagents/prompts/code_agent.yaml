@@ -10,13 +10,14 @@ system_prompt: |-
   In the end you have to return a final answer using the `final_answer` tool.
 
   Here are a few examples using notional tools:
+  * Tool is the asynchronous function so it should be awaited except 'final_answer', 'visit_webpage', 'web_search'.
   ---
   Task: "Generate an image of the oldest person in this document."
 
   Thought: I will proceed step by step and use the following tools: `document_qa` to find the oldest person in the document, then `image_generator` to generate an image according to the answer.
   Code:
   ```py
-  answer = document_qa(document=document, question="Who is the oldest person mentioned?")
+  answer = await document_qa(document=document, question="Who is the oldest person mentioned?")
   print(answer)
   ```<end_code>
   Observation: "The oldest person in the document is John Doe, a 55 year old lumberjack living in Newfoundland."
@@ -24,7 +25,7 @@ system_prompt: |-
   Thought: I will now generate an image showcasing the oldest person.
   Code:
   ```py
-  image = image_generator("A portrait of John Doe, a 55-year-old man living in Canada.")
+  image = await image_generator("A portrait of John Doe, a 55-year-old man living in Canada.")
   final_answer(image)
   ```<end_code>
 
@@ -49,7 +50,7 @@ system_prompt: |-
   ```py
   translated_question = translator(question=question, src_lang="French", tgt_lang="English")
   print(f"The translated question is {translated_question}.")
-  answer = image_qa(image=image, question=translated_question)
+  answer = await image_qa(image=image, question=translated_question)
   final_answer(f"The answer is {answer}")
   ```<end_code>
 
@@ -61,7 +62,7 @@ system_prompt: |-
   Thought: I need to find and read the 1979 interview of Stanislaus Ulam with Martin Sherwin.
   Code:
   ```py
-  pages = search(query="1979 interview Stanislaus Ulam Martin Sherwin physicists Einstein")
+  pages = await search(query="1979 interview Stanislaus Ulam Martin Sherwin physicists Einstein")
   print(pages)
   ```<end_code>
   Observation:
@@ -70,7 +71,7 @@ system_prompt: |-
   Thought: The query was maybe too restrictive and did not find any results. Let's try again with a broader query.
   Code:
   ```py
-  pages = search(query="1979 interview Stanislaus Ulam")
+  pages = await search(query="1979 interview Stanislaus Ulam")
   print(pages)
   ```<end_code>
   Observation:
@@ -126,7 +127,7 @@ system_prompt: |-
   Thought: I will use the tool `wiki` to get the age of the pope, and confirm that with a web search.
   Code:
   ```py
-  pope_age_wiki = wiki(query="current pope age")
+  pope_age_wiki = await wiki(query="current pope age")
   print("Pope age as per wikipedia:", pope_age_wiki)
   pope_age_search = web_search(query="current pope age")
   print("Pope age as per google search:", pope_age_search)

@@ -255,8 +255,8 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
 
         if getattr(self, "python_executor", None):
             self.python_executor.send_variables(variables=self.state)
-            # self.python_executor.send_tools({**self.tools, **self.managed_agents})
-            self.python_executor.send_tools({**self.tools, })
+            self.python_executor.send_tools({**self.tools, **self.managed_agents})
+            #self.python_executor.send_tools({**self.tools, })
 
         if stream:
             # The steps are returned as they are executed through a generator to iterate on.
