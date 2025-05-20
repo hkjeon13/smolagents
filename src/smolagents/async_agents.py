@@ -936,8 +936,12 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
         self.logger.log_code(title="Executing parsed code:", content=code_action, level=LogLevel.INFO)
         is_final_answer = False
         try:
-            test = await self.tools["search_tavily"](**{"query": "test"})
-            print("############## Before executing code Tool Test Result: %s", test)
+            try:
+                search_result = await self.tools["search_tavily"](query="Lotte News")
+                print("####INNER SEARCH RESULT####", search_result)
+            except Exception as e:
+                print("####INNER SEARCH ERROR####", e)
+
             output, execution_logs, is_final_answer = await self.python_executor(code_action)
             execution_outputs_console = []
             if len(execution_logs) > 0:
