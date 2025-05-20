@@ -71,7 +71,7 @@ logger = getLogger(__name__)
 class AsyncMultiStepAgentBase:
     def __init__(
             self,
-            tools: list[Tool],
+            tools: list[AsyncTool],
             model: AsyncModel ,
             prompt_templates: PromptTemplates | None = None,
             max_steps: int = 20,
@@ -152,7 +152,7 @@ class AsyncMultiStepAgentBase:
 class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
     def __init__(
         self,
-        tools: list[Tool],
+        tools: list[AsyncTool],
         model: AsyncModel , #TODO: Change to the AsyncModel
         prompt_templates: PromptTemplates | None = None,
         max_steps: int = 20,
