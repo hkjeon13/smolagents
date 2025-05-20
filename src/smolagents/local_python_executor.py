@@ -15,6 +15,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import ast
+import asyncio
+import threading
+
+# Helper function to run async coroutine in a synchronous context
+def run_async_as_sync(coro):
+    result = {}
+
+    def runner():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result["value"] = loop.run_until_complete(coro)
+        except Exception as e:
+            result["error"] = e
+        finally:
+            loop.close()
+
+    t = threading.Thread(target=runner)
+    t.start()
+    t.join()
+
+    if "error" in result:
+        raise result["error"]
+    return result["value"]
 import builtins
 import difflib
 import inspect
@@ -1327,6 +1351,9 @@ def evaluate_ast(
         return evaluate_lambda(expression, *common_params)
     elif isinstance(expression, ast.FunctionDef):
         return evaluate_function_def(expression, *common_params)
+    elif isinstance(expression, ast.AsyncFunctionDef):
+        # Treat async function definitions the same as normal functions
+        return evaluate_function_def(expression, *common_params)
     elif isinstance(expression, ast.Dict):
         # Dict -> evaluate all keys and values
         keys = (evaluate_ast(k, *common_params) for k in expression.keys)
@@ -1338,6 +1365,28 @@ def evaluate_ast(
     elif isinstance(expression, ast.For):
         # For loop -> execute the loop
         return evaluate_for(expression, *common_params)
+    elif isinstance(expression, ast.AsyncFor):
+        result = None
+        async_iter = evaluate_ast(expression.iter, *common_params)
+        if inspect.isasyncgen(async_iter) or inspect.iscoroutine(async_iter):
+            iter_values = run_async_as_sync(async_iter)
+        else:
+            iter_values = async_iter
+        for item in iter_values:
+            set_value(expression.target, item, *common_params)
+            for stmt in expression.body:
+                try:
+                    line_result = evaluate_ast(stmt, *common_params)
+                    if line_result is not None:
+                        result = line_result
+                except BreakException:
+                    break
+                except ContinueException:
+                    continue
+            else:
+                continue
+            break
+        return result
     elif isinstance(expression, ast.FormattedValue):
         # Formatted value (part of f-string) -> evaluate the content and format it
         value = evaluate_ast(expression.value, *common_params)
@@ -1371,6 +1420,12 @@ def evaluate_ast(
             return evaluate_ast(expression.orelse, *common_params)
     elif isinstance(expression, ast.Attribute):
         return evaluate_attribute(expression, *common_params)
+    elif isinstance(expression, ast.Await):
+        awaited = evaluate_ast(expression.value, *common_params)
+        if inspect.iscoroutine(awaited):
+            return run_async_as_sync(awaited)
+        else:
+            return awaited
     elif isinstance(expression, ast.Slice):
         return slice(
             evaluate_ast(expression.lower, *common_params) if expression.lower is not None else None,
@@ -1391,6 +1446,29 @@ def evaluate_ast(
         return evaluate_assert(expression, *common_params)
     elif isinstance(expression, ast.With):
         return evaluate_with(expression, *common_params)
+    elif isinstance(expression, ast.AsyncWith):
+        contexts = []
+        for item in expression.items:
+            context_expr = evaluate_ast(item.context_expr, *common_params)
+            if item.optional_vars:
+                entered = run_async_as_sync(context_expr.__aenter__())
+                state[item.optional_vars.id] = entered
+                contexts.append((context_expr, entered))
+            else:
+                entered = run_async_as_sync(context_expr.__aenter__())
+                contexts.append((context_expr, entered))
+
+        try:
+            for stmt in expression.body:
+                evaluate_ast(stmt, *common_params)
+        except Exception as e:
+            for ctx, _ in reversed(contexts):
+                run_async_as_sync(ctx.__aexit__(type(e), e, e.__traceback__))
+            raise
+        else:
+            for ctx, _ in reversed(contexts):
+                run_async_as_sync(ctx.__aexit__(None, None, None))
+        return None
     elif isinstance(expression, ast.Set):
         return set((evaluate_ast(elt, *common_params) for elt in expression.elts))
     elif isinstance(expression, ast.Return):

@@ -111,7 +111,8 @@ class SmolAgentsAdapter(ToolAdapter):
             afunc: Callable[[dict | None], Coroutine[Any, Any, mcp.types.CallToolResult]],
             mcp_tool: mcp.types.Tool,
     ) -> smolagents.Tool:
-        class AsyncMCPAdaptTool(smolagents.AsyncTool):
+        from smolagents.async_tools import AsyncTool
+        class AsyncMCPAdaptTool(AsyncTool):
             def __init__(
                     self,
                     name: str,

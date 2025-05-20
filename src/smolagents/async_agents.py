@@ -49,7 +49,7 @@ from .monitoring import (
     AgentLogger,
 )
 from .remote_executors import DockerExecutor, E2BExecutor
-from .tools import Tool
+from .async_tools import AsyncTool
 from .utils import (
     AgentError,
     AgentExecutionError,
@@ -213,7 +213,8 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
         self.stream_outputs = False
 
     def _setup_tools(self, tools, add_base_tools):
-        assert all(isinstance(tool, Tool) for tool in tools), "All elements must be instance of Tool (or a subclass)"
+        assert all(isinstance(tool, AsyncTool) for tool in tools), "All elements must be instance of AsyncTool (or a subclass)"
+
         self.tools = {tool.name: tool for tool in tools}
         if add_base_tools:
             self.tools.update(
@@ -429,6 +430,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
                     }
                 ],
             }
+
             input_messages = [plan_update_pre] + memory_messages + [plan_update_post]
             if self.stream_outputs and hasattr(self.model, "generate_stream"):
                 plan_message_content = ""
@@ -532,7 +534,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
 class AsyncToolCallingAgent(AsyncMultiStepAgent):
     def __init__(
             self,
-            tools: list[Tool],
+            tools: list[AsyncTool],
             model: AsyncModel,
             prompt_templates: PromptTemplates | None = None,
             grammar: dict[str, str] | None = None,
@@ -721,7 +723,9 @@ class AsyncToolCallingAgent(AsyncMultiStepAgent):
                     output = await tool(**arguments)
                     return output
                 else:
-                    return tool(**arguments, sanitize_inputs_outputs=True)
+                    output = await tool(**arguments, sanitize_inputs_outputs=True)
+                    return output
+
             elif isinstance(arguments, str):
                 if is_managed_agent:
                     output = await tool(arguments)
@@ -730,7 +734,8 @@ class AsyncToolCallingAgent(AsyncMultiStepAgent):
                     # If the tool is not a managed agent, we need to sanitize the inputs and outputs
                     # before passing them to the tool.
                     # This is because the tool may not be able to handle raw strings.
-                    return tool(arguments, sanitize_inputs_outputs=True)
+                    output = await tool(arguments, sanitize_inputs_outputs=True)
+                    return output
             else:
                 raise TypeError(f"Unsupported arguments type: {type(arguments)}")
 
@@ -772,7 +777,7 @@ class AsyncToolCallingAgent(AsyncMultiStepAgent):
 class AsyncCodeAgent(AsyncMultiStepAgent):
     def __init__(
             self,
-            tools: list[Tool],
+            tools: list[AsyncTool],
             model: AsyncModel ,
             prompt_templates: PromptTemplates | None = None,
             grammar: dict[str, str] | None = None,
