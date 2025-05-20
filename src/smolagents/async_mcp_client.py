@@ -107,11 +107,71 @@ class SmolAgentsAdapter(ToolAdapter):
         )
 
     async def async_adapt(
-        self,
-        afunc: Callable[[dict | None], Coroutine[Any, Any, mcp.types.CallToolResult]],
-        mcp_tool: mcp.types.Tool,
+            self,
+            afunc: Callable[[dict | None], Coroutine[Any, Any, mcp.types.CallToolResult]],
+            mcp_tool: mcp.types.Tool,
     ) -> smolagents.Tool:
-        return self.adapt(afunc, mcp_tool)
+        class AsyncMCPAdaptTool(smolagents.AsyncTool):
+            def __init__(
+                    self,
+                    name: str,
+                    description: str,
+                    inputs: dict[str, dict[str, str]],
+                    output_type: str,
+            ):
+                self.name = _sanitize_function_name(name)
+                self.description = description
+                self.inputs = inputs
+                self.output_type = output_type
+                self.is_initialized = True
+                self.skip_forward_signature_validation = True
+
+            async def forward(self, *args, **kwargs) -> str:
+                if len(args) > 0:
+                    if len(args) == 1 and isinstance(args[0], dict) and not kwargs:
+                        mcp_output = await afunc(args[0])
+                    else:
+                        raise ValueError(
+                            f"tool {self.name} does not support multiple positional arguments or combined positional and keyword arguments"
+                        )
+                else:
+                    mcp_output = await afunc(kwargs)
+
+                if len(mcp_output.content) == 0:
+                    raise ValueError(f"tool {self.name} returned an empty content")
+
+                if len(mcp_output.content) > 1:
+                    logger.warning(
+                        f"tool {self.name} returned multiple content, using the first one"
+                    )
+
+                if not isinstance(mcp_output.content[0], mcp.types.TextContent):
+                    raise ValueError(
+                        f"tool {self.name} returned a non-text content: `{type(mcp_output.content[0])}`"
+                    )
+
+                return mcp_output.content[0].text  # type: ignore
+
+        input_schema = {
+            k: v
+            for k, v in jsonref.replace_refs(mcp_tool.inputSchema).items()
+            if k != "$defs"
+        }
+
+        for k, v in input_schema["properties"].items():
+            if "description" not in v:
+                input_schema["properties"][k]["description"] = "see tool description"
+            if "type" not in v:
+                input_schema["properties"][k]["type"] = "string"
+
+        tool = AsyncMCPAdaptTool(
+            name=mcp_tool.name,
+            description=mcp_tool.description or "",
+            inputs=input_schema["properties"],
+            output_type="string",
+        )
+
+        return tool
 
 
 class AsyncMCPClient:
