@@ -869,6 +869,8 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
         try:
             additional_args = {"grammar": self.grammar} if self.grammar is not None else {}
             if self.stream_outputs:
+                search_result = await self.tools["search_tavily"](query="Lotte News")
+                print("###### Search result (4):", search_result)
                 output_stream = self.model.generate_stream(
                     input_messages,
                     stop_sequences=["<end_code>", "Observation:", "Calling tools:"],
@@ -887,6 +889,8 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
                 memory_step.model_output_message = chat_message
                 model_output = chat_message.content
             else:
+                search_result = await self.tools["search_tavily"](query="Lotte News")
+                print("###### Search result (3):", search_result)
                 chat_message: ChatMessage = await self.model.generate(
                     input_messages,
                     stop_sequences=["<end_code>", "Observation:", "Calling tools:"],
@@ -916,6 +920,9 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
             memory_step.model_output = model_output
         except Exception as e:
             raise AgentGenerationError(f"Error in generating model output:\n{e}", self.logger) from e
+
+        search_result = await self.tools["search_tavily"](query="Lotte News")
+        print("###### Search result (2):", search_result)
 
         ### Parse output ###
         try:
