@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     import PIL.Image
 
 from .agent_types import AgentAudio, AgentImage, handle_agent_output_types
-from .async_default_tools import TOOL_MAPPING, AsyncFinalAnswerTool
+from .default_tools import TOOL_MAPPING, FinalAnswerTool
 from .local_python_executor import BASE_BUILTIN_MODULES, LocalPythonExecutor, PythonExecutor, fix_final_answer_code
 from .memory import (
     ActionStep,
@@ -40,7 +40,7 @@ from .monitoring import (
     AgentLogger,
 )
 from .remote_executors import DockerExecutor, E2BExecutor
-from .async_tools import AsyncTool
+from .tools import Tool
 from .utils import (
     AgentError,
     AgentExecutionError,
@@ -61,7 +61,7 @@ logger = getLogger(__name__)
 class AsyncMultiStepAgentBase:
     def __init__(
             self,
-            tools: list[AsyncTool],
+            tools: list[Tool],
             model: AsyncModel,
             prompt_templates: PromptTemplates | None = None,
             max_steps: int = 20,
@@ -142,7 +142,7 @@ class AsyncMultiStepAgentBase:
 class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
     def __init__(
             self,
-            tools: list[AsyncTool],
+            tools: list[Tool],
             model: AsyncModel,  # TODO: Change to the AsyncModel
             prompt_templates: PromptTemplates | None = None,
             max_steps: int = 20,
@@ -204,7 +204,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
 
     def _setup_tools(self, tools, add_base_tools):
         assert all(
-            isinstance(tool, AsyncTool) for tool in tools), "All elements must be instance of AsyncTool (or a subclass)"
+            isinstance(tool, Tool) for tool in tools), "All elements must be instance of Tool (or a subclass)"
 
         self.tools = {tool.name: tool for tool in tools}
         if add_base_tools:
@@ -215,7 +215,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
                     if name != "python_interpreter" or self.__class__.__name__ == "AsyncToolCallingAgent"
                 }
             )
-        self.tools.setdefault("final_answer", AsyncFinalAnswerTool())
+        self.tools.setdefault("final_answer", FinalAnswerTool())
 
     async def run(
             self,
@@ -255,8 +255,8 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
 
         if getattr(self, "python_executor", None):
             self.python_executor.send_variables(variables=self.state)
-            self.python_executor.send_tools({**self.tools, **self.managed_agents})
-            #self.python_executor.send_tools({**self.tools, })
+            #self.python_executor.send_tools({**self.tools, **self.managed_agents})
+            self.python_executor.send_tools({**self.tools, })
 
         if stream:
             return self._run_stream(task=self.task, max_steps=max_steps, images=images)
@@ -529,7 +529,7 @@ class AsyncMultiStepAgent(AsyncMultiStepAgentBase, MultiStepAgent, ABC):
 class AsyncToolCallingAgent(AsyncMultiStepAgent):
     def __init__(
             self,
-            tools: list[AsyncTool],
+            tools: list[Tool],
             model: AsyncModel,
             prompt_templates: PromptTemplates | None = None,
             grammar: dict[str, str] | None = None,
@@ -665,7 +665,7 @@ class AsyncToolCallingAgent(AsyncMultiStepAgent):
                     level=LogLevel.INFO,
                 )
             else:
-                final_answer = await self.execute_tool_call("final_answer", {"answer": answer})
+                final_answer = self.execute_tool_call("final_answer", {"answer": answer})
                 self.logger.log(
                     Text(f"Final answer: {final_answer}", style=f"bold {YELLOW_HEX}"),
                     level=LogLevel.INFO,
@@ -734,8 +734,7 @@ class AsyncToolCallingAgent(AsyncMultiStepAgent):
                     output = await tool(**arguments)
                     return output
                 else:
-                    output = await tool(**arguments, sanitize_inputs_outputs=True)
-                    return output
+                    return tool(**arguments, sanitize_inputs_outputs=True)
 
             elif isinstance(arguments, str):
                 if is_managed_agent:
@@ -745,8 +744,7 @@ class AsyncToolCallingAgent(AsyncMultiStepAgent):
                     # If the tool is not a managed agent, we need to sanitize the inputs and outputs
                     # before passing them to the tool.
                     # This is because the tool may not be able to handle raw strings.
-                    output = await tool(arguments, sanitize_inputs_outputs=True)
-                    return output
+                    return tool(arguments, sanitize_inputs_outputs=True)
             else:
                 raise TypeError(f"Unsupported arguments type: {type(arguments)}")
 
@@ -787,7 +785,7 @@ class AsyncToolCallingAgent(AsyncMultiStepAgent):
 class AsyncCodeAgent(AsyncMultiStepAgent):
     def __init__(
             self,
-            tools: list[AsyncTool],
+            tools: list[Tool],
             model: AsyncModel,
             prompt_templates: PromptTemplates | None = None,
             grammar: dict[str, str] | None = None,
@@ -940,7 +938,7 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
         self.logger.log_code(title="Executing parsed code:", content=code_action, level=LogLevel.INFO)
         is_final_answer = False
         try:
-            output, execution_logs, is_final_answer = await self.python_executor(code_action)
+            output, execution_logs, is_final_answer = self.python_executor(code_action)
             execution_outputs_console = []
             if len(execution_logs) > 0:
                 execution_outputs_console += [
