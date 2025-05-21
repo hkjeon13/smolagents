@@ -21,7 +21,6 @@ import inspect
 import logging
 import math
 import re
-import asyncio
 from collections.abc import Callable, Mapping
 from functools import wraps
 from importlib import import_module
@@ -457,6 +456,33 @@ def evaluate_class_def(
     for stmt in class_def.body:
         if isinstance(stmt, ast.FunctionDef):
             class_dict[stmt.name] = evaluate_ast(stmt, state, static_tools, custom_tools, authorized_imports)
+        elif isinstance(stmt, ast.AnnAssign):
+            if stmt.value:
+                value = evaluate_ast(stmt.value, state, static_tools, custom_tools, authorized_imports)
+            target = stmt.target
+            # Handle target types for annotation
+            if isinstance(target, ast.Name):
+                # Simple variable annotation like "x: int"
+                annotation = evaluate_ast(stmt.annotation, state, static_tools, custom_tools, authorized_imports)
+                class_dict.setdefault("__annotations__", {})[target.id] = annotation
+                # Assign value if provided
+                if stmt.value:
+                    class_dict[target.id] = value
+            elif isinstance(target, ast.Attribute):
+                # Attribute annotation like "obj.attr: int"
+                obj = evaluate_ast(target.value, class_dict, static_tools, custom_tools, authorized_imports)
+                # If there's a value assignment, set the attribute
+                if stmt.value:
+                    setattr(obj, target.attr, value)
+            elif isinstance(target, ast.Subscript):
+                # Subscript annotation like "dict[key]: int"
+                container = evaluate_ast(target.value, class_dict, static_tools, custom_tools, authorized_imports)
+                index = evaluate_ast(target.slice, state, static_tools, custom_tools, authorized_imports)
+                # If there's a value assignment, set the item
+                if stmt.value:
+                    container[index] = value
+            else:
+                raise InterpreterError(f"Unsupported AnnAssign target in class body: {type(target).__name__}")
         elif isinstance(stmt, ast.Assign):
             for target in stmt.targets:
                 if isinstance(target, ast.Name):
@@ -773,10 +799,7 @@ def evaluate_call(
             raise InterpreterError(
                 f"Invoking a builtin function that has not been explicitly added as a tool is not allowed ({func_name})."
             )
-        result = func(*args, **kwargs)
-        if inspect.iscoroutine(result) or inspect.isasyncgen(result):
-            return asyncio.run(result)
-        return result
+        return func(*args, **kwargs)
 
 
 def evaluate_subscript(
@@ -1529,18 +1552,15 @@ class LocalPythonExecutor(PythonExecutor):
         self.static_tools = None
         self.additional_functions = additional_functions or {}
 
-    async def __call__(self, code_action: str) -> tuple[Any, str, bool]:
-        logger.debug("Recieved code to execute: {}".format(code_action))
-        output, is_final_answer = await asyncio.to_thread(
-                evaluate_python_code,
-                code_action,
-                static_tools=self.static_tools,
-                custom_tools=self.custom_tools,
-                state=self.state,
-                authorized_imports=self.authorized_imports,
-                max_print_outputs_length=self.max_print_outputs_length,
+    def __call__(self, code_action: str) -> tuple[Any, str, bool]:
+        output, is_final_answer = evaluate_python_code(
+            code_action,
+            static_tools=self.static_tools,
+            custom_tools=self.custom_tools,
+            state=self.state,
+            authorized_imports=self.authorized_imports,
+            max_print_outputs_length=self.max_print_outputs_length,
         )
-
         logs = str(self.state["_print_outputs"])
         return output, logs, is_final_answer
 
