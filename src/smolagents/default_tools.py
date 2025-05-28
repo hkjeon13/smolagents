@@ -87,6 +87,7 @@ class FinalAnswerTool(Tool):
         text = textwrap.dedent(answer)
         return text
 
+
 class UserInputTool(Tool):
     name = "user_input"
     description = "Asks for user's input on a specific question"
