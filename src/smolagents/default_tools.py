@@ -210,21 +210,88 @@ class GoogleSearchTool(Tool):
         return "## Search Results\n" + "\n\n".join(web_snippets)
 
 
+class ApiWebSearchTool(Tool):
+    name = "web_search"
+    description = "Performs a web search for a query and returns a string of the top search results formatted as markdown with titles, URLs, and descriptions."
+    inputs = {"query": {"type": "string", "description": "The search query to perform."}}
+    output_type = "string"
+
+    def __init__(self, endpoint: str = "", api_key: str = "", api_key_name: str = ""):
+        import os
+
+        super().__init__()
+        self.endpoint = endpoint
+        self.api_key = api_key or os.getenv(api_key_name)
+
+    @property
+    def endpoint(self):
+        return self._endpoint
+
+    @endpoint.setter
+    def endpoint(self, value):
+        self._endpoint = value or "https://api.search.brave.com/res/v1/web/search"
+
+    @property
+    def headers(self):
+        return {"X-Subscription-Token": self.api_key}
+
+    @property
+    def params(self):
+        return {"count": 10}
+
+    def forward(self, query: str) -> str:
+        import requests
+
+        params = {**self.params, "q": query}
+        response = requests.get(self.endpoint, headers=self.headers, params=params)
+        response.raise_for_status()
+        data = response.json()
+        results = self.extract_results(data)
+        return self.format_markdown(results)
+
+    def extract_results(self, data: dict) -> list:
+        results = []
+        for result in data.get("web", {}).get("results", []):
+            results.append(
+                {"title": result["title"], "url": result["url"], "description": result.get("description", "")}
+            )
+        return results
+
+    def format_markdown(self, results: list) -> str:
+        if not results:
+            return "No results found."
+        return "## Search Results\n\n" + "\n\n".join(
+            [
+                f"{idx}. [{result['title']}]({result['url']})\n{result['description']}"
+                for idx, result in enumerate(results, start=1)
+            ]
+        )
+
+
 class WebSearchTool(Tool):
     name = "web_search"
     description = "Performs a web search for a query and returns a string of the top search results formatted as markdown with titles, links, and descriptions."
     inputs = {"query": {"type": "string", "description": "The search query to perform."}}
     output_type = "string"
 
-    def __init__(self, max_results=10):
+    def __init__(self, max_results: int = 10, engine: str = "duckduckgo"):
         super().__init__()
         self.max_results = max_results
+        self.engine = engine
 
     def forward(self, query: str) -> str:
-        results = self.search_duckduckgo(query)
+        results = self.search(query)
         if len(results) == 0:
             raise Exception("No results found! Try a less restrictive/shorter query.")
         return self.parse_results(results)
+
+    def search(self, query: str) -> list:
+        if self.engine == "duckduckgo":
+            return self.search_duckduckgo(query)
+        elif self.engine == "bing":
+            return self.search_bing(query)
+        else:
+            raise ValueError(f"Unsupported engine: {self.engine}")
 
     def parse_results(self, results: list) -> str:
         return "## Search Results\n\n" + "\n\n".join(
@@ -289,6 +356,28 @@ class WebSearchTool(Tool):
                     self.current["link"] = "https://" + data.strip()
 
         return SimpleResultParser()
+
+    def search_bing(self, query: str) -> list:
+        import xml.etree.ElementTree as ET
+
+        import requests
+
+        response = requests.get(
+            "https://www.bing.com/search",
+            params={"q": query, "format": "rss"},
+        )
+        response.raise_for_status()
+        root = ET.fromstring(response.text)
+        items = root.findall(".//item")
+        results = [
+            {
+                "title": item.findtext("title"),
+                "link": item.findtext("link"),
+                "description": item.findtext("description"),
+            }
+            for item in items[: self.max_results]
+        ]
+        return results
 
 
 class VisitWebpageTool(Tool):
