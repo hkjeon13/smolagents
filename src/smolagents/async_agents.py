@@ -945,11 +945,14 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
             except json.JSONDecodeError:
                 execution = None
             if isinstance(execution, list) and len(execution) > 0:
+                privacy = {}
                 for i in range(len(execution)):
                     if "metadata" in execution[i]:
-                        privacy = execution[i]["metadata"].pop("privacy", {})
+                        privacy.update(execution[i]["metadata"].pop("privacy", {}))
                         self.logger.log(f"## Privacy: {privacy}")
-                execution_logs = json.dumps(execution, indent=2)
+                execution_logs = json.dumps(execution, indent=2, ensure_ascii=False)
+                for key, value in privacy.items():
+                    execution_logs = execution_logs.replace(key, str(value))
 
             execution_outputs_console = []
             if len(execution_logs) > 0:
