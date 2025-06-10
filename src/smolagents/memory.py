@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, TypedDict
 from smolagents.models import ChatMessage, MessageRole
 from smolagents.monitoring import AgentLogger, LogLevel
 from smolagents.utils import AgentError, make_json_serializable
-
+from dataclasses import Field
 if TYPE_CHECKING:
     import PIL.Image
 
@@ -18,6 +18,7 @@ logger = getLogger(__name__)
 class Message(TypedDict):
     role: MessageRole
     content: str | list[dict[str, Any]]
+
 
 
 @dataclass
@@ -60,6 +61,14 @@ class ActionStep(MemoryStep):
     observations: str | None = None
     observations_images: list["PIL.Image.Image"] | None = None
     action_output: Any = None
+    privacy_data: dict[str, Any] = Field(default_factory=dict)
+
+
+    def __post_init__(self):
+        """
+        filter privacy exlusion from the model_input_messages
+        """
+
 
     def dict(self):
         # We overwrite the method to parse the tool_calls and action_output manually
@@ -129,6 +138,7 @@ class ActionStep(MemoryStep):
                     + str(self.error)
                     + "\nNow let's retry: take care not to repeat previous errors! If you have retried several times, try a completely different approach.\n"
             )
+
             message_content = f"Call id: {self.tool_calls[0].id}\n" if self.tool_calls else ""
             message_content += error_message
             messages.append(

@@ -939,6 +939,18 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
         is_final_answer = False
         try:
             output, execution_logs, is_final_answer = self.python_executor(code_action)
+
+            try:
+                execution = json.loads(execution_logs)
+            except json.JSONDecodeError:
+                execution = None
+            if isinstance(execution, list) and len(execution) > 0:
+                for i in range(len(execution)):
+                    if "metadata" in execution[i]:
+                        privacy = execution[i]["metadata"].pop("privacy", {})
+                        self.logger.log(f"## Privacy: {privacy}")
+                execution_logs = json.dumps(execution, indent=2)
+
             execution_outputs_console = []
             if len(execution_logs) > 0:
                 execution_outputs_console += [
