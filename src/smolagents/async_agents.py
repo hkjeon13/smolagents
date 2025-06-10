@@ -821,6 +821,7 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
         self.executor_type = executor_type or "local"
         self.executor_kwargs = executor_kwargs or {}
         self.python_executor = self.create_python_executor()
+        self.privacy_maps = {}  # Maps variable names to their privacy metadata
 
     def create_python_executor(self) -> PythonExecutor:
         match self.executor_type:
@@ -949,10 +950,12 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
                 for i in range(len(execution)):
                     if "metadata" in execution[i]:
                         privacy.update(execution[i]["metadata"].pop("privacy", {}))
-                        self.logger.log(f"## Privacy: {privacy}")
+
                 execution_logs = json.dumps(execution, indent=2, ensure_ascii=False)
                 for key, value in privacy.items():
                     execution_logs = execution_logs.replace(key, str(value))
+
+                self.privacy_maps.update({v:k for k, v in privacy.items()})
 
             execution_outputs_console = []
             if len(execution_logs) > 0:
