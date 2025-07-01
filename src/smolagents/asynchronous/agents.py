@@ -1,38 +1,27 @@
+import asyncio
 import importlib.resources
-import yaml
+import json
+import textwrap
+import time
 import typing as T
 import warnings
-import time
-import PIL.Image
-import asyncio
-import json
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
+import PIL.Image
+import yaml
 from rich.console import Group
 from rich.live import Live
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.rule import Rule
 from rich.text import Text
-import textwrap
-
 from smolagents import (
-    ChatMessageStreamDelta,
-    PlanningStep,
     ToolCall,
     ToolOutput,
-    ActionOutput,
-    ActionStep,
-    FinalAnswerStep, ChatMessage
+    ActionOutput
 )
-from smolagents.monitoring import AgentLogger, LogLevel, YELLOW_HEX, Monitor
-from smolagents.tools import Tool, validate_tool_arguments
-from smolagents.memory import MemoryStep, SystemPromptStep,TaskStep, ActionStep, FinalAnswerStep, PlanningStep
-from smolagents.models import ChatMessageStreamDelta
-from smolagents.agent_types import AgentType, AgentText, AgentImage, AgentAudio
+from smolagents.agent_types import AgentImage, AgentAudio
 from smolagents.agents import (
     MultiStepAgent,
-    AgentMemory,
     PromptTemplates,
     EMPTY_PROMPT_TEMPLATES,
     RunResult,
@@ -42,12 +31,23 @@ from smolagents.agents import (
     populate_template,
     SystemPromptStep,
     AgentMemory,
-    AgentLogger,
-    MessageRole
+    AgentLogger
 )
-
+from smolagents.local_python_executor import BASE_BUILTIN_MODULES, LocalPythonExecutor, PythonExecutor, \
+    fix_final_answer_code
+from smolagents.memory import MemoryStep, TaskStep, ActionStep, FinalAnswerStep, PlanningStep
+from smolagents.models import (
+    CODEAGENT_RESPONSE_FORMAT,
+    ChatMessage,
+    ChatMessageStreamDelta,
+    MessageRole,
+    agglomerate_stream_deltas,
+    parse_json_if_needed,
+)
+from smolagents.monitoring import LogLevel, YELLOW_HEX, Monitor
+from smolagents.remote_executors import DockerExecutor, E2BExecutor, WasmExecutor
+from smolagents.tools import Tool, validate_tool_arguments
 from smolagents.utils import (
-    AGENT_GRADIO_APP_TEMPLATE,
     AgentError,
     AgentExecutionError,
     AgentGenerationError,
@@ -56,24 +56,9 @@ from smolagents.utils import (
     AgentToolCallError,
     AgentToolExecutionError,
     extract_code_from_text,
-    is_valid_name,
-    make_init_file,
     parse_code_blobs,
     truncate_content,
 )
-
-from smolagents.models import (
-    CODEAGENT_RESPONSE_FORMAT,
-    ChatMessage,
-    ChatMessageStreamDelta,
-    ChatMessageToolCall,
-    MessageRole,
-    agglomerate_stream_deltas,
-    parse_json_if_needed,
-)
-from smolagents.local_python_executor import BASE_BUILTIN_MODULES, LocalPythonExecutor, PythonExecutor, fix_final_answer_code
-from smolagents.remote_executors import DockerExecutor, E2BExecutor, WasmExecutor
-
 
 from .models import AsyncModel
 
@@ -151,15 +136,15 @@ class AsyncMultiStepAgent(MultiStepAgent):
         self._setup_step_callbacks(step_callbacks)
         self.stream_outputs = False
 
-        async def run(
-                self,
-                task: str,
-                stream: bool = False,
-                reset: bool = True,
-                images: list["PIL.Image.Image"] | None = None,
-                additional_args: dict | None = None,
-                max_steps: int | None = None,
-        ):
+    async def run(
+            self,
+            task: str,
+            stream: bool = False,
+            reset: bool = True,
+            images: list["PIL.Image.Image"] | None = None,
+            additional_args: dict | None = None,
+            max_steps: int | None = None,
+    ):
             """
             Run the agent for the given task.
 
