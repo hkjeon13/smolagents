@@ -896,6 +896,7 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
         self.executor_type = executor_type
         self.executor_kwargs: dict[str, T.Any] = executor_kwargs or {}
         self.python_executor = self.create_python_executor()
+        self.privacy_maps = {}  # Maps variable names to their privacy metadata
 
     def __enter__(self):
         return self
@@ -1034,6 +1035,24 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
         self.logger.log_code(title="Executing parsed code:", content=code_action, level=LogLevel.INFO)
         try:
             code_output = self.python_executor(code_action)
+
+            try:
+                execution = json.loads(code_output.logs)
+            except json.JSONDecodeError:
+                execution = None
+
+            if isinstance(execution, list) and len(execution) > 0:
+                privacy = {}
+                for i in range(len(execution)):
+                    if "metadata" in execution[i]:
+                        privacy.update(execution[i]["metadata"].pop("privacy", {}))
+
+                execution_logs = json.dumps(execution, indent=2, ensure_ascii=False)
+                for key, value in privacy.items():
+                    execution_logs = execution_logs.replace(key, str(value))
+
+                self.privacy_maps.update({v: k for k, v in privacy.items()})
+
             execution_outputs_console = []
             if len(code_output.logs) > 0:
                 execution_outputs_console += [
@@ -1041,6 +1060,7 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
                     Text(code_output.logs),
                 ]
             observation = "Execution logs:\n" + code_output.logs
+
         except Exception as e:
             if hasattr(self.python_executor, "state") and "_print_outputs" in self.python_executor.state:
                 execution_logs = str(self.python_executor.state["_print_outputs"])
