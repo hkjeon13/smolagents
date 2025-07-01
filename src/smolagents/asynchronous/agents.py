@@ -254,7 +254,7 @@ class AsyncMultiStepAgent(MultiStepAgent):
 
     async def _run_stream(
         self, task: str, max_steps: int, images: list["PIL.Image.Image"] | None = None
-    ) -> T.AsyncGenerator[ChatMessageStreamDelta | PlanningStep | ToolCall | ToolOutput | ActionOutput | ActionStep | FinalAnswerStep]:
+    ) -> T.AsyncGenerator[ChatMessageStreamDelta | PlanningStep | ToolCall | ToolOutput | ActionOutput | ActionStep | FinalAnswerStep, None]:
         self.step_number = 1
         returned_final_answer = False
         while not returned_final_answer and self.step_number <= max_steps:
@@ -340,7 +340,7 @@ class AsyncMultiStepAgent(MultiStepAgent):
 
     async def _generate_planning_step(
             self, task, is_first_step: bool, step: int
-    ) -> T.AsyncGenerator[ChatMessageStreamDelta | PlanningStep]:
+    ) -> T.AsyncGenerator[ChatMessageStreamDelta | PlanningStep, None]:
         start_time = time.time()
         if is_first_step:
             input_messages = [
@@ -501,7 +501,7 @@ class AsyncMultiStepAgent(MultiStepAgent):
 
     async def _step_stream(
         self, memory_step: ActionStep
-    ) -> T.AsyncGenerator[ChatMessageStreamDelta | ToolCall | ToolOutput | ActionOutput]:
+    ) -> T.AsyncGenerator[ChatMessageStreamDelta | ToolCall | ToolOutput | ActionOutput, None]:
         """
         Perform one step in the ReAct framework: the agent thinks, acts, and observes the result.
         Yields ChatMessageStreamDelta during the run if streaming is enabled.
@@ -574,7 +574,7 @@ class ToolCallingAgent(MultiStepAgent):
 
     async def _step_stream(
         self, memory_step: ActionStep
-    ) -> T.AsyncGenerator[ChatMessageStreamDelta | ToolCall | ToolOutput | ActionOutput]:
+    ) -> T.AsyncGenerator[ChatMessageStreamDelta | ToolCall | ToolOutput | ActionOutput, None]:
         """
         Perform one step in the ReAct framework: the agent thinks, acts, and observes the result.
         Yields ChatMessageStreamDelta during the run if streaming is enabled.
@@ -660,7 +660,7 @@ class ToolCallingAgent(MultiStepAgent):
 
     async def process_tool_calls(
         self, chat_message: ChatMessage, memory_step: ActionStep
-    ) -> T.AsyncGenerator[ToolCall | ToolOutput]:
+    ) -> T.AsyncGenerator[ToolCall | ToolOutput, None]:
         """Process tool calls from the model output and update agent memory.
 
         Args:
@@ -947,7 +947,7 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
 
     async def _step_stream(
         self, memory_step: ActionStep
-    ) -> T.AsyncGenerator[ChatMessageStreamDelta | ToolCall | ToolOutput | ActionOutput]:
+    ) -> T.AsyncGenerator[ChatMessageStreamDelta | ToolCall | ToolOutput | ActionOutput, None]:
         """
         Perform one step in the ReAct framework: the agent thinks, acts, and observes the result.
         Yields ChatMessageStreamDelta during the run if streaming is enabled.
