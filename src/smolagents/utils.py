@@ -202,7 +202,7 @@ def parse_code_blobs(text: str, code_block_tags: tuple[str, str], tool_list: lis
         matches = extract_code_from_text(text, ("```(?:python|py)", "\n```"))
     if matches:
         if any(name+"(" in matches for name in tool_names) and "final_answer(" in matches:
-            matches = matches.split("final_answer(")[0]
+            matches = matches.split("final_answer(")[0] + "# Final answer was removed to avoid execution errors\n"
             return matches
 
         return matches
