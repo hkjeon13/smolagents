@@ -207,6 +207,8 @@ def parse_code_blobs(text: str, code_block_tags: tuple[str, str], tool_list: lis
                     f"""
                     Invalid code snippet, because it contains both tool calls and a final answer.
                     You should either use tool calls or return the final answer, not both.
+                    Try Again! 1. Execute the tool calls and print its output. 2. Summarize the above printed observations and return the final answer.
+                    
                     """
                 ).strip()
             )
