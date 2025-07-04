@@ -88,53 +88,27 @@ class AsyncMultiStepAgent(MultiStepAgent):
             final_answer_checks: list[T.Callable] | None = None,
             return_full_result: bool = False,
             logger: AgentLogger | None = None,
+            *args, **kwargs
     ):
-        self.agent_name = self.__class__.__name__
-        self.model = model
-        self.prompt_templates = prompt_templates or EMPTY_PROMPT_TEMPLATES
-        if prompt_templates is not None:
-            missing_keys = set(EMPTY_PROMPT_TEMPLATES.keys()) - set(prompt_templates.keys())
-            assert not missing_keys, (
-                f"Some prompt templates are missing from your custom `prompt_templates`: {missing_keys}"
-            )
-            for key, value in EMPTY_PROMPT_TEMPLATES.items():
-                if isinstance(value, dict):
-                    for subkey in value.keys():
-                        assert key in prompt_templates.keys() and (subkey in prompt_templates[key].keys()), (
-                            f"Some prompt templates are missing from your custom `prompt_templates`: {subkey} under {key}"
-                        )
-
-        self.max_steps = max_steps
-        self.step_number = 0
-        if grammar is not None:
-            warnings.warn(
-                "Parameter 'grammar' is deprecated and will be removed in version 1.20.",
-                FutureWarning,
-            )
-        self.grammar = grammar
-        self.planning_interval = planning_interval
-        self.state: dict[str, T.Any] = {}
-        self.name = self._validate_name(name)
-        self.description = description
-        self.provide_run_summary = provide_run_summary
-        self.final_answer_checks = final_answer_checks if final_answer_checks is not None else []
-        self.return_full_result = return_full_result
-        self.instructions = instructions
-        self._setup_managed_agents(managed_agents)
-        self._setup_tools(tools, add_base_tools)
-        self._validate_tools_and_managed_agents(tools, managed_agents)
-
-        self.task: str | None = None
-        self.memory = AgentMemory(self.system_prompt)
-
-        if logger is None:
-            self.logger = AgentLogger(level=verbosity_level) # TODO: check if this is needed for async system
-        else:
-            self.logger = logger
-
-        self.monitor = Monitor(self.model, self.logger) # TODO: check if this is needed for async system
-        self._setup_step_callbacks(step_callbacks)
-        self.stream_outputs = False
+        super().__init__(
+            tools=tools,
+            model=model, # type: ignore
+            prompt_templates=prompt_templates,
+            instructions=instructions,
+            max_steps=max_steps,
+            add_base_tools=add_base_tools,
+            verbosity_level=verbosity_level,
+            managed_agents=managed_agents,
+            step_callbacks=step_callbacks,
+            planning_interval=planning_interval,
+            name=name,
+            description=description,
+            provide_run_summary=provide_run_summary,
+            final_answer_checks=final_answer_checks,
+            return_full_result=return_full_result,
+            logger=logger,
+            grammar=grammar,
+        )
 
     async def run(
             self,
