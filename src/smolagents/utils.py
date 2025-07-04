@@ -202,16 +202,8 @@ def parse_code_blobs(text: str, code_block_tags: tuple[str, str], tool_list: lis
         matches = extract_code_from_text(text, ("```(?:python|py)", "\n```"))
     if matches:
         if any(name+"(" in matches for name in tool_names) and "final_answer(" in matches:
-            raise ValueError(
-                dedent(
-                    f"""
-                    Invalid code snippet, because it contains both tool calls and a final answer.
-                    You should either use tool calls or return the final answer, not both.
-                    Try Again! 1. Execute the tool calls and print its output. 2. Summarize the above printed observations and return the final answer.
-                    
-                    """
-                ).strip()
-            )
+            matches = matches.split("final_answer(")[0]
+            return matches
 
         return matches
     # Maybe the LLM outputted a code blob directly
