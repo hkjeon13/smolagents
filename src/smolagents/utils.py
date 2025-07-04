@@ -181,24 +181,36 @@ def extract_code_from_text(text: str, code_block_tags: tuple[str, str]) -> str |
     return None
 
 
-def parse_code_blobs(text: str, code_block_tags: tuple[str, str]) -> str:
+def parse_code_blobs(text: str, code_block_tags: tuple[str, str], tool_list: list[str] = []) -> str:
     """Extract code blocs from the LLM's output.
 
     If a valid code block is passed, it returns it directly.
 
     Args:
         text (`str`): LLM's output text to parse.
-
+        code_block_tags (`tuple[str, str]`): Code block tags to extract.
+        tool_list (`list`, optional): List of tools to use for extraction. Defaults to an empty list.
     Returns:
         `str`: Extracted code block.
 
     Raises:
         ValueError: If no valid code block is found in the text.
     """
+    tool_names = set(tool_list) - {"final_answer"}
     matches = extract_code_from_text(text, code_block_tags)
     if not matches:  # Fallback to markdown pattern
         matches = extract_code_from_text(text, ("```(?:python|py)", "\n```"))
     if matches:
+        if any(name+"(" in matches for name in tool_names) and "final_answer(" in matches:
+            raise ValueError(
+                dedent(
+                    f"""
+                    Invalid code snippet, because it contains both tool calls and a final answer.
+                    You should either use tool calls or return the final answer, not both.
+                    """
+                ).strip()
+            )
+
         return matches
     # Maybe the LLM outputted a code blob directly
     try:

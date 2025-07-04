@@ -1664,7 +1664,7 @@ class CodeAgent(MultiStepAgent):
                 code_action = json.loads(output_text)["code"]
                 code_action = extract_code_from_text(code_action, self.code_block_tags) or code_action
             else:
-                code_action = parse_code_blobs(output_text, self.code_block_tags)
+                code_action = parse_code_blobs(output_text, self.code_block_tags, list(self.tools.keys()))
             code_action = fix_final_answer_code(code_action)
             memory_step.code_action = code_action
         except Exception as e:
