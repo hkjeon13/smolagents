@@ -201,6 +201,8 @@ def parse_code_blobs(text: str, code_block_tags: tuple[str, str], tool_list: lis
     if not matches:  # Fallback to markdown pattern
         matches = extract_code_from_text(text, ("```(?:python|py)", "\n```"))
     if matches:
+        print("## Matches found:", matches)
+
         if any(name+"(" in matches for name in tool_names) and "final_answer(" in matches:
             raise ValueError(
                 dedent(
