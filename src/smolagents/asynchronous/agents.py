@@ -171,7 +171,7 @@ class AsyncMultiStepAgent(MultiStepAgent):
             run_start_time = time.time()
             # Outputs are returned only at the end. We only look at the last step.
 
-            steps = list(self._run_stream(task=self.task, max_steps=max_steps, images=images))
+            steps = [x async for x in self._run_stream(task=self.task, max_steps=max_steps, images=images)]
             assert isinstance(steps[-1], FinalAnswerStep)
             output = steps[-1].output
 
