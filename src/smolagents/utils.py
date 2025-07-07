@@ -204,7 +204,13 @@ def parse_code_blobs(text: str, code_block_tags: tuple[str, str], tool_list: lis
         if any(name+"(" in matches for name in tool_names) and "final_answer(" in matches:
 
             matches = matches.split("final_answer(")[0] + "# Final answer was removed to avoid execution errors\n"
-            matches = re.sub(r'(summary|answer)\s*=\s*""".*?"""[\t ]*\n?', '', matches, flags=re.DOTALL)
+            matches = re.sub(
+                r'(summary|answer)\s*=\s*""".*?"""[\t ]*\n?',
+                "# The 'summary' or 'answer' block was removed to prevent interference with tool output execution.",
+                matches,
+                flags=re.DOTALL,
+            )
+
 
             return matches
 
