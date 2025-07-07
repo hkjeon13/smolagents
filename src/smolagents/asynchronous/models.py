@@ -3,6 +3,7 @@ from typing import Any
 
 from smolagents import Tool, ChatMessage
 from smolagents.models import Model, ChatMessageStreamDelta
+from smolagents.monitoring import TokenUsage
 
 
 class AsyncModel(Model):
@@ -154,9 +155,9 @@ class AsyncOpenAIServerModel(AsyncApiModel):
 
     async def generate_stream(
             self,
-            messages: list[dict[str, str | list[dict]]],
+            messages: list[ChatMessage],
             stop_sequences: list[str] | None = None,
-            grammar: str | None = None,
+            response_format: dict[str, str] | None = None,
             tools_to_call_from: list[Tool] | None = None,
             **kwargs,
     ) -> AsyncGenerator[ChatMessageStreamDelta]:
@@ -166,7 +167,7 @@ class AsyncOpenAIServerModel(AsyncApiModel):
         completion_kwargs = self._prepare_completion_kwargs(
             messages=messages,
             stop_sequences=stop_sequences,
-            grammar=grammar,
+            response_format=response_format,
             tools_to_call_from=tools_to_call_from,
             model=self.model_id,
             custom_role_conversions=self.custom_role_conversions,
@@ -207,13 +208,18 @@ class AsyncOpenAIServerModel(AsyncApiModel):
             convert_images_to_image_urls=True,
             **kwargs,
         )
+        completion_kwargs.pop("grammar", None)
         response = await self.client.chat.completions.create(**completion_kwargs)
-        self.last_input_token_count = response.usage.prompt_tokens
-        self.last_output_token_count = response.usage.completion_tokens
+        self._last_input_token_count = getattr(response.usage, "prompt_tokens", 0)
+        self._last_output_token_count = getattr(response.usage, "completion_tokens", 0)
 
         return ChatMessage.from_dict(
             response.choices[0].message.model_dump(include={"role", "content", "tool_calls"}),
             raw=response,
+            token_usage=TokenUsage(
+                input_tokens=response.usage.prompt_tokens,
+                output_tokens=response.usage.completion_tokens,
+            ),
         )
 
 
@@ -272,3 +278,15 @@ class AsyncAzureOpenAIServerModel(AsyncOpenAIServerModel):
             ) from e
 
         return openai.AsyncAzureOpenAI(**self.client_kwargs)
+
+
+
+if __name__ == "__main__":
+    import asyncio
+    import os
+    async def main():
+        model = AsyncOpenAIServerModel(model_id="gpt-4.1", api_key=os.getenv("OPENAI_API_KEY"))
+        response = await model([ChatMessage(role="user", content="Hello, how are you?")])
+        print(response)
+
+    asyncio.run(main())
