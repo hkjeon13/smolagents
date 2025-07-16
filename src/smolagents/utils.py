@@ -203,7 +203,7 @@ def parse_code_blobs(text: str, code_block_tags: tuple[str, str], tool_list: lis
         matches = extract_code_from_text(text, ("```(?:python|py)", "\n```"))
     if matches:
         if len([l for l in matches.split("\n") if l.strip()]) == 1 and "print(" in matches:
-            matches = matches.replace("print(", "final_answer(")
+            return matches.replace("print(", "final_answer(")
 
         if any(name+"(" in matches for name in tool_names) and "final_answer(" in matches:
 
