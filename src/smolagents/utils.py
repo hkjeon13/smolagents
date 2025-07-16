@@ -198,12 +198,13 @@ def parse_code_blobs(text: str, code_block_tags: tuple[str, str], tool_list: lis
     """
     tool_names = set(tool_list) - {"final_answer"}
     matches = extract_code_from_text(text, code_block_tags)
-    if len([l for l in matches.split("\n") if l.strip()]) == 1 and "print(" in matches:
-        matches = matches.replace("print(", "final_answer(")
 
     if not matches:  # Fallback to markdown pattern
         matches = extract_code_from_text(text, ("```(?:python|py)", "\n```"))
     if matches:
+        if len([l for l in matches.split("\n") if l.strip()]) == 1 and "print(" in matches:
+            matches = matches.replace("print(", "final_answer(")
+
         if any(name+"(" in matches for name in tool_names) and "final_answer(" in matches:
 
             matches = matches.split("final_answer(")[0] + "# Final answer was removed to avoid execution errors\n"
