@@ -1048,8 +1048,11 @@ class AsyncCodeAgent(AsyncMultiStepAgent):
                     f"Out: {truncated_output}",
                 ),
             ]
+
         self.logger.log(Group(*execution_outputs_console), level=LogLevel.INFO)
+
         memory_step.action_output = code_output.output
+
         yield ActionOutput(output=code_output.output, is_final_answer=code_output.is_final_answer)
 
     def to_dict(self) -> dict[str, T.Any]:
