@@ -217,7 +217,6 @@ def parse_code_blobs(text: str, code_block_tags: tuple[str, str], tool_list: lis
                 flags=re.DOTALL,
             )
 
-
             return matches
 
         return matches
