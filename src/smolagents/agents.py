@@ -1708,7 +1708,7 @@ class CodeAgent(MultiStepAgent):
                 )
             raise AgentExecutionError(error_msg, self.logger)
 
-        truncated_output = truncate_content(str(code_output.output))
+        truncated_output = truncate_content(str(code_output.output), max_length=100_000)
         observation += "Last output from code snippet:\n" + truncated_output
         memory_step.observations = observation
 
